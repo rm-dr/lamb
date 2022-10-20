@@ -1,5 +1,6 @@
 from parser import Parser
 import tokens
+import colorama as cr
 
 
 class lambda_runner:
@@ -42,6 +43,47 @@ class lambda_runner:
 		else:
 			return None
 		return self.expr
+
+
+
+"""
+   |  _.._ _.|_
+   |_(_|| | ||_)
+       1.1.0
+
+       __  __
+    ,-`  ``  `,
+   (`   \      )
+  (`     \     `)
+  (,    / \    _)
+   (`  /   \   )
+    `'._.--._.'
+
+ A λ calculus engine
+"""
+
+b = cr.Style.BRIGHT
+v = cr.Fore.GREEN + cr.Style.BRIGHT
+l = cr.Fore.RED + cr.Style.BRIGHT
+n = cr.Style.RESET_ALL
+t = cr.Fore.GREEN
+
+print(f"""
+
+{b}    |  _.._ _.|_
+    |_(_|| | ||_){n}
+        {v}1.1.0{n}
+        __  __
+     ,-`  ``  `,
+    (`   {l}\{n}      )
+   (`     {l}\{n}     `)
+   (,    {l}/ \{n}    _)
+    (`  {l}/   \{n}   )
+     `'._.--._.'
+
+{t} A λ calculus engine{n}
+
+"""[1:-1])
 
 
 r = lambda_runner()
