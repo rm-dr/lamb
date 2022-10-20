@@ -1,0 +1,8 @@
+{
+    "cSpell.words": [
+        "freevar",
+        "pyparsing",
+        "subvar"
+    ],
+    "python.analysis.typeCheckingMode": "basic"
+}
