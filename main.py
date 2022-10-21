@@ -1,146 +1,87 @@
+from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit import print_formatted_text
+from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.formatted_text import to_plain_text
+from prompt_toolkit.key_binding import KeyBindings
+
+from pyparsing import exceptions as ppx
+
 from parser import Parser
+from runner import Runner
 import tokens
-import colorama as cr
+import greeting
 
 
-class lambda_runner:
-	def __init__(self):
-		self.macro_table = {}
-		self.expr = None
+# Replace "\" with a pretty "λ" in the prompt
+bindings = KeyBindings()
+@bindings.add("\\")
+def _(event):
+	event.current_buffer.insert_text("λ")
 
-	# Apply a list of definitions
-	def run_names(self, lines):
-		print("Added names:")
-		for l in lines:
-			if isinstance(l, str):
-				e = Parser.parse_assign(l)
-			else:
-				e = l
-
-			if e.label in self.macro_table:
-				raise NameError(f"Label {e.label} exists!")
-
-			e.exp.bind_variables()
-			self.macro_table[e.label] = e.exp
-			print(f"\t{e}")
-		print("\n")
-
-	def set_expr(self, expr: str | None = None):
-		if expr == None:
-			self.expr = None
-			print("Removed expression.\n")
-			return
-
-		self.expr = Parser.parse_expression(expr)
-		self.expr.bind_variables()
-		print(f"Set expression to {self.expr}\n")
-
-	def run(self):
-		if isinstance(self.expr, tokens.lambda_apply):
-			self.expr = self.expr.expand(self.macro_table)
-		elif isinstance(self.expr, tokens.lambda_func):
-			self.expr = self.expr.expand(self.macro_table)
-		else:
-			return None
-		return self.expr
-
-
-
-"""
-   |  _.._ _.|_
-   |_(_|| | ||_)
-       1.1.0
-
-       __  __
-    ,-`  ``  `,
-   (`   \      )
-  (`     \     `)
-  (,    / \    _)
-   (`  /   \   )
-    `'._.--._.'
-
- A λ calculus engine
-"""
-
-b = cr.Style.BRIGHT
-v = cr.Fore.GREEN + cr.Style.BRIGHT
-l = cr.Fore.RED + cr.Style.BRIGHT
-n = cr.Style.RESET_ALL
-t = cr.Fore.GREEN
-
-print(f"""
-
-{b}    |  _.._ _.|_
-    |_(_|| | ||_){n}
-        {v}1.1.0{n}
-        __  __
-     ,-`  ``  `,
-    (`   {l}\{n}      )
-   (`     {l}\{n}     `)
-   (,    {l}/ \{n}    _)
-    (`  {l}/   \{n}   )
-     `'._.--._.'
-
-{t} A λ calculus engine{n}
-
-"""[1:-1])
-
-
-r = lambda_runner()
-
-r.run_names([
-	"T = a -> b -> a",
-	"F = a -> b -> a",
-	"NOT = a -> (a F T)",
-	"AND = a -> b -> (a F b)",
-	"OR = a -> b -> (a T b)",
-	"XOR = a -> b -> (a (NOT a b) b)"
-])
-
-r.run_names([
-	"w = x -> (x x)",
-	"W = (w w)",
-	"Y = f -> ( (x -> (f (x x))) (x -> (f (x x))) )",
-	#"l = if_true -> if_false -> which -> ( which if_true if_false )"
-])
-
-r.run_names([
-	"inc = n -> f -> x -> (f (n f x))",
-	"zero = a -> x -> x",
-	"one = f -> x -> (f x)",
-])
-
-print("\n")
-
-#AND = r.run()
-#OR = r.run()
-#XOR = r.run()
-
-r.set_expr(
-	"(" +
-	"inc (inc (inc (zero)))"
-	+ ")"
+session = PromptSession(
+	message = FormattedText([
+		("#00FFFF", "~~> ")
+	]),
+	key_bindings = bindings
 )
 
-print(repr(r.expr))
-print("")
 
-outs = [str(r.expr)]
-for i in range(300):
-	x = r.run()
-	s = str(x)
-	p = s if len(s) < 100 else s[:97] + "..."
+greeting.show()
 
-	if s in outs:
-		print(p)
-		print("\nLoop detected, exiting.")
+
+
+
+r = Runner()
+
+r.run_lines([
+	"T = λa.λb.a",
+	"F = λa.λb.b",
+	"NOT = \\a.(a F T)",
+	#"AND = a -> b -> (a F b)",
+	#"OR = a -> b -> (a T b)",
+	#"XOR = a -> b -> (a (NOT a b) b)",
+	#"w = x -> (x x)",
+	#"W = (w w)",
+	#"Y = f -> ( (x -> (f (x x))) (x -> (f (x x))) )",
+	#"l = if_true -> if_false -> which -> ( which if_true if_false )"
+	#"inc = n -> f -> x -> (f (n f x))",
+	#"zero = a -> x -> x",
+	#"one = f -> x -> (f x)",
+])
+
+
+while True:
+	try:
+		i = session.prompt()
+
+	# Catch Ctrl-C and Ctrl-D
+	except KeyboardInterrupt:
+		print("")
+		break
+	except EOFError:
+		print("")
 		break
 
-	if x is None:
-		print("\nCannot evaluate any further.")
-		break
+	if i.strip() == "":
+		continue
 
-	outs.append(s)
-	print(p)
 
-print(f"Performed {i} {'operations' if i != 1 else 'operation'}.")
+	try:
+		x = r.run(i)
+	except ppx.ParseException as e:
+		l = len(to_plain_text(session.message))
+		print_formatted_text(FormattedText([
+			("#FF0000", " "*(e.loc + l) + "^\n"),
+			("#FF0000", f"Syntax error at char {e.loc}."),
+			("#FFFFFF", "\n")
+		]))
+		continue
+
+
+	print_formatted_text(FormattedText([
+		("#00FF00", "    = "),
+		("#FFFFFF", str(x))
+	]))
+
+	print("")
