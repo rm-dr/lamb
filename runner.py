@@ -6,6 +6,10 @@ class Runner:
 		self.macro_table = {}
 		self.expr = None
 
+	def exec_command(self, command: str):
+		if command == "help":
+			print("This is a help message.")
+
 	# Apply a list of definitions
 	def run(self, line: str):
 		e = Parser.parse_line(line)
@@ -17,7 +21,7 @@ class Runner:
 			self.macro_table[e.label] = e.exp
 
 		elif isinstance(e, tokens.command):
-			pass
+			self.exec_command(e.name)
 		else:
 			e.bind_variables()
 			self.expr = e

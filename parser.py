@@ -17,21 +17,21 @@ class Parser:
 
 	# Simple tokens
 	pp_expr = pp.Forward()
-	pp_name = pp.Word(pp.alphas + "_")
-	pp_name.set_parse_action(tokens.macro.from_parse)
+	pp_macro = pp.Word(pp.alphas + "_")
+	pp_macro.set_parse_action(tokens.macro.from_parse)
 
 	# Function definitions.
 	# Right associative.
 	#
 	# <var> => <exp>
-	pp_lambda_fun = (pp.Suppress("λ") | pp.Suppress("\\")) + pp_name + pp.Suppress(".") + pp_expr
+	pp_lambda_fun = (pp.Suppress("λ") | pp.Suppress("\\")) + pp_macro + pp.Suppress(".") + pp_expr
 	pp_lambda_fun.set_parse_action(tokens.lambda_func.from_parse)
 
 	# Assignment.
 	# Can only be found at the start of a line.
 	#
 	# <var> = <exp>
-	pp_macro_def = pp.line_start() + pp_name + pp.Suppress("=") + pp_expr
+	pp_macro_def = pp.line_start() + pp_macro + pp.Suppress("=") + pp_expr
 	pp_macro_def.set_parse_action(tokens.macro_expression.from_parse)
 
 	# Function calls.
@@ -45,10 +45,10 @@ class Parser:
 	pp_call <<= pp_expr[2, ...]
 	pp_call.set_parse_action(tokens.lambda_apply.from_parse)
 
-	pp_expr <<= pp_lambda_fun ^ (lp + pp_expr + rp) ^ pp_name ^ (lp + pp_call + rp)
+	pp_expr <<= pp_lambda_fun ^ (lp + pp_expr + rp) ^ pp_macro ^ (lp + pp_call + rp)
 	pp_all = pp_expr | pp_macro_def
 
-	pp_command = ":" + pp_name
+	pp_command = pp.Suppress(":") + pp.Word(pp.alphas + "_")
 	pp_command.set_parse_action(tokens.command.from_parse)
 
 	@staticmethod
@@ -62,7 +62,7 @@ class Parser:
 			parse_all = True
 		)[0]
 		print(k)
-		return(k)
+		return k
 
 	@staticmethod
 	def run_tests(lines):
