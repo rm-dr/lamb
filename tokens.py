@@ -1,7 +1,53 @@
-from typing import Type
+from ast import Lambda
+import enum
+
+class ReductionType(enum.Enum):
+	MACRO_EXPAND	= enum.auto()
+	MACRO_TO_FREE	= enum.auto()
+	FUNCTION_APPLY	= enum.auto()
 
 
-class free_variable:
+class ReductionStatus:
+	"""
+	This object helps organize reduction output.
+	An instance is returned after every reduction step.
+	"""
+
+	def __init__(
+		self,
+		*,
+		output,
+		was_reduced: bool,
+		reduction_type: ReductionType | None = None
+	):
+		# The new expression
+		self.output = output
+
+		# What did we do?
+		# Will be None if was_reduced is false.
+		self.reduction_type = reduction_type
+
+		# Did this reduction change anything?
+		# If we try to reduce an irreducible expression,
+		# this will be false.
+		self.was_reduced = was_reduced
+
+
+class LambdaToken:
+	"""
+	Base class for all lambda tokens.
+	"""
+
+	def bind_variables(self) -> None:
+		pass
+
+	def reduce(self, macro_table) -> ReductionStatus:
+		return ReductionStatus(
+			was_reduced = False,
+			output = self
+		)
+
+class free_variable(LambdaToken):
 	"""
 	Represents a free variable.
 
@@ -22,13 +68,22 @@ class free_variable:
 	def __str__(self):
 		return f"{self.label}"
 
+class command:
+	@staticmethod
+	def from_parse(result):
+		return command(
+			result[0],
+		)
 
-class macro:
+	def __init__(self, name):
+		self.name = name
+
+class macro(LambdaToken):
 	"""
 	Represents a "macro" in lambda calculus,
-	a variable that expands to an expression.
+	a variable that reduces to an expression.
 
-	These don't have inherent logic, they
+	These don't have any inherent logic, they
 	just make writing and reading expressions
 	easier.
 
@@ -54,14 +109,21 @@ class macro:
 			raise TypeError("Can only compare macro with macro")
 		return self.name == other.name
 
-	def expand(self, macro_table = {}, *, auto_free_vars = True):
+	def reduce(self, macro_table = {}, *, auto_free_vars = True) -> ReductionStatus:
 		if self.name in macro_table:
-			return macro_table[self.name]
+			return ReductionStatus(
+				output = macro_table[self.name],
+				reduction_type = ReductionType.MACRO_EXPAND,
+				was_reduced = True
+			)
 		elif not auto_free_vars:
 			raise NameError(f"Name {self.name} is not defined!")
 		else:
-			return free_variable(self.name)
-
+			return ReductionStatus(
+				output = free_variable(self.name),
+				reduction_type = ReductionType.MACRO_TO_FREE,
+				was_reduced = True
+			)
 
 class macro_expression:
 	"""
@@ -80,7 +142,7 @@ class macro_expression:
 			result[1]
 		)
 
-	def __init__(self, label, exp):
+	def __init__(self, label: str, exp: LambdaToken):
 		self.label = label
 		self.exp = exp
 
@@ -91,11 +153,8 @@ class macro_expression:
 		return f"{self.label} := {self.exp}"
 
 
-
-
-
 bound_variable_counter = 0
-class bound_variable:
+class bound_variable(LambdaToken):
 	def __init__(self, forced_id = None):
 		global bound_variable_counter
 
@@ -113,7 +172,7 @@ class bound_variable:
 	def __repr__(self):
 		return f"<in {self.identifier}>"
 
-class lambda_func:
+class lambda_func(LambdaToken):
 	"""
 	Represents a function.
 		Defined like λa.aa
@@ -132,16 +191,19 @@ class lambda_func:
 			result[1]
 		)
 
-	def __init__(self, input_var, output):
-		self.input = input_var
-		self.output = output
+	def __init__(
+			self,
+			input_var: macro | bound_variable,
+			output: LambdaToken
+		):
+		self.input: macro | bound_variable = input_var
+		self.output: LambdaToken = output
 
 	def __repr__(self) -> str:
 		return f"<{self.input!r} → {self.output!r}>"
 
 	def __str__(self) -> str:
 		return f"λ{self.input}.{self.output}"
-
 
 	def bind_variables(
 			self,
@@ -211,29 +273,25 @@ class lambda_func:
 		elif isinstance(self.output, lambda_apply):
 			self.output.bind_variables(placeholder, val)
 
-	# Expand this function's output.
-	# For functions, this isn't done unless
-	# its explicitly asked for.
-	def expand(self, macro_table = {}):
-		new_out = self.output
-		if isinstance(self.output, macro):
-			new_out = self.output.expand(macro_table)
+	def reduce(self, macro_table = {}) -> ReductionStatus:
 
-			# If the macro becomes a free variable, expand again.
-			if isinstance(new_out, free_variable):
-				lambda_func(
-					self.input,
-					new_out
-				).expand(macro_table)
+		r = self.output.reduce(macro_table)
 
-		elif isinstance(self.output, lambda_func):
-			new_out = self.output.expand(macro_table)
-		elif isinstance(self.output, lambda_apply):
-			new_out = self.output.expand(macro_table)
-		return lambda_func(
-			self.input,
-			new_out
+		# If a macro becomes a free variable,
+		# reduce twice.
+		if r.reduction_type == ReductionType.MACRO_TO_FREE:
+			self.output = r.output
+			return self.reduce(macro_table)
+
+		return ReductionStatus(
+			was_reduced = r.was_reduced,
+			reduction_type = r.reduction_type,
+			output = lambda_func(
+				self.input,
+				r.output
+			)
 		)
+
 
 	def apply(
 			self,
@@ -259,8 +317,6 @@ class lambda_func:
 			new_out = self.output.apply(val, bound_var = bound_var)
 		elif isinstance(self.output, lambda_apply):
 			new_out = self.output.sub_bound_var(val, bound_var = bound_var)
-		else:
-			raise TypeError("Cannot apply a function to {self.output!r}")
 
 		# If we're applying THIS function,
 		# just give the output
@@ -276,7 +332,7 @@ class lambda_func:
 			)
 
 
-class lambda_apply:
+class lambda_apply(LambdaToken):
 	"""
 	Represents a function application.
 	Has two elements: fn, the function,
@@ -303,11 +359,11 @@ class lambda_apply:
 
 	def __init__(
 			self,
-			fn,
-			arg
+			fn: LambdaToken,
+			arg: LambdaToken
 		):
-		self.fn = fn
-		self.arg = arg
+		self.fn: LambdaToken = fn
+		self.arg: LambdaToken = arg
 
 	def __repr__(self) -> str:
 		return f"<{self.fn!r} | {self.arg!r}>"
@@ -381,40 +437,48 @@ class lambda_apply:
 			new_arg
 		)
 
-	def expand(self, macro_table = {}):
-		# If fn is a function, apply it.
+	def reduce(self, macro_table = {}) -> ReductionStatus:
+
+		# If we can directly apply self.fn, do so.
 		if isinstance(self.fn, lambda_func):
-			return self.fn.apply(self.arg)
-		# If fn is an application or macro, expand it.
-		elif isinstance(self.fn, macro):
-			f = lambda_apply(
-				m := self.fn.expand(macro_table),
-				self.arg
+			return ReductionStatus(
+				was_reduced = True,
+				reduction_type = ReductionType.FUNCTION_APPLY,
+				output = self.fn.apply(self.arg)
 			)
 
+		# Otherwise, try to reduce self.fn.
+		# If that is impossible, try to reduce self.arg.
+		else:
+			r = self.fn.reduce(macro_table)
 			# If a macro becomes a free variable,
-			# expand twice.
-			if isinstance(m, free_variable):
-				return f.expand(macro_table)
+			# reduce twice.
+			if r.reduction_type == ReductionType.MACRO_TO_FREE:
+				self.fn = r.output
+				return self.reduce(macro_table)
+
+			if r.was_reduced:
+				return ReductionStatus(
+					was_reduced = True,
+					reduction_type = r.reduction_type,
+					output = lambda_apply(
+						r.output,
+						self.arg
+					)
+				)
+
 			else:
-				return f
+				r = self.arg.reduce(macro_table)
 
-		elif isinstance(self.fn, lambda_apply):
-			return lambda_apply(
-				self.fn.expand(macro_table),
-				self.arg
-			)
+				if r.reduction_type == ReductionType.MACRO_TO_FREE:
+					self.arg = r.output
+					return self.reduce(macro_table)
 
-		# If we get to this point, the function we're applying
-		# can't be expanded. That means it's a free or bound
-		# variable. If that happens, expand the arg instead.
-		elif (
-			isinstance(self.arg, lambda_apply) or
-			isinstance(self.arg, lambda_func)
-		):
-			return lambda_apply(
-				self.fn,
-				self.arg.expand(macro_table)
-			)
-
-		return self
+				return ReductionStatus(
+					was_reduced = r.was_reduced,
+					reduction_type = r.reduction_type,
+					output = lambda_apply(
+						self.fn,
+						r.output
+					)
+				)
