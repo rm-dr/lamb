@@ -1,7 +1,4 @@
-<h1 align="center">
-<img src="misc/lamb.svg" style="height:10ex"><br/>
-Lamb: A Lambda Calculus Engine
-</h1>
+# Lamb: A Lambda Calculus Engine
 
 
 ## Todo (pre-release):
