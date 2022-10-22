@@ -1,3 +1,4 @@
+from distutils.cmd import Command
 from prompt_toolkit.formatted_text import FormattedText
 
 import lamb.commands as commands
@@ -15,8 +16,8 @@ class Runner:
 		# If None, no maximum is enforced.
 		self.reduction_limit: int | None = 300
 
-	def exec_command(self, command: str) -> rs.CommandStatus:
-		if command in commands.commands:
+	def exec_command(self, command: tokens.command) -> rs.CommandStatus:
+		if command.name in commands.commands:
 			return commands.run(command, self)
 
 		# Handle unknown commands
@@ -80,7 +81,7 @@ class Runner:
 
 		# If this line is a command, do the command.
 		elif isinstance(e, tokens.command):
-			return self.exec_command(e.name)
+			return self.exec_command(e)
 
 		# If this line is a plain expression, reduce it.
 		elif isinstance(e, tokens.LambdaToken):

@@ -56,7 +56,7 @@ class Parser:
 		(lp + pp_call + rp)
 	)
 
-	pp_command = pp.Suppress(":") + pp.Word(pp.alphas + "_")
+	pp_command = pp.Suppress(":") + pp.Word(pp.alphas + "_") + pp.Word(pp.alphas + "_")[0, ...]
 	pp_command.set_parse_action(tokens.command.from_parse)
 
 

@@ -1,4 +1,5 @@
 from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.shortcuts import clear as clear_screen
 
 from lamb.runstatus import CommandStatus
@@ -16,11 +17,29 @@ def lamb_command(*, help_text: str):
 	return inner
 
 def run(command, runner):
-	return commands[command](runner)
+	return commands[command.name](command, runner)
 
+@lamb_command(help_text = "Delete a macro")
+def mdel(command, runner):
+	if len(command.args) != 1:
+		return CommandStatus(
+			formatted_text = HTML(
+				"<red>Command <grey>:mdel</grey> takes exactly one argument.</red>"
+			)
+		)
+
+	target = command.args[0]
+	if target not in runner.macro_table:
+		return CommandStatus(
+			formatted_text = HTML(
+				f"<red>Macro \"{target}\" is not defined</red>"
+			)
+		)
+
+	del runner.macro_table[target]
 
 @lamb_command(help_text = "Show macros")
-def macros(runner):
+def macros(command, runner):
 	return CommandStatus(
 		formatted_text = FormattedText([
 			("#FF6600 bold", "\nDefined Macros:\n"),
@@ -33,13 +52,13 @@ def macros(runner):
 	)
 
 @lamb_command(help_text = "Clear the screen")
-def clear(runner):
+def clear(command, runner):
 	clear_screen()
 	utils.show_greeting()
 
 
 @lamb_command(help_text = "Print this help")
-def help(runner):
+def help(command, runner):
 	return CommandStatus(
 		formatted_text = FormattedText([
 			("#FF6600 bold", "\nUsage:\n"),

@@ -81,10 +81,12 @@ class command:
 	def from_parse(result):
 		return command(
 			result[0],
+			result[1:]
 		)
 
-	def __init__(self, name):
+	def __init__(self, name, args):
 		self.name = name
+		self.args = args
 
 class macro(LambdaToken):
 	"""
