@@ -1,5 +1,8 @@
 import pyparsing as pp
 
+# Packrat gives a MAD speed boost.
+pp.ParserElement.enablePackrat()
+
 import lamb.tokens as tokens
 import lamb.utils as utils
 
