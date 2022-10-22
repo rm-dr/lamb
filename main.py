@@ -36,19 +36,19 @@ greeting.show()
 r = runner.Runner()
 
 r.run_lines([
-	"T = λa.λb.a",
-	"F = λa.λb.b",
-	"NOT = \\a.(a F T)",
-	#"AND = a -> b -> (a F b)",
-	#"OR = a -> b -> (a T b)",
-	#"XOR = a -> b -> (a (NOT a b) b)",
-	#"w = x -> (x x)",
-	#"W = (w w)",
-	#"Y = f -> ( (x -> (f (x x))) (x -> (f (x x))) )",
-	#"l = if_true -> if_false -> which -> ( which if_true if_false )"
-	#"inc = n -> f -> x -> (f (n f x))",
-	#"zero = a -> x -> x",
-	#"one = f -> x -> (f x)",
+	"T = λab.a",
+	"F = λab.b",
+	"NOT = λa.(a F T)",
+	"AND = λab.(a F b)",
+	"OR = λab.(a T b)",
+	"XOR = λab.(a (NOT a b) b)",
+	"w = λx.(x x)",
+	"W = (w w)",
+	"Y = λf.( (λx.(f (x x))) (λx.(f (x x))) )",
+	"PAIR = λabi.( i a b )",
+	"inc = λnfa.(f (n f a))",
+	"zero = λax.x",
+	"one = λfx.(f x)"
 ])
 
 

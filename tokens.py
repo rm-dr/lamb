@@ -207,10 +207,16 @@ class lambda_func(LambdaToken):
 
 	@staticmethod
 	def from_parse(result):
-		return lambda_func(
-			result[0],
-			result[1]
-		)
+		if len(result[0]) == 1:
+			return lambda_func(
+				macro(result[0][0]),
+				result[1]
+			)
+		else:
+			return lambda_func(
+				macro(result[0].pop(0)),
+				lambda_func.from_parse(result)
+			)
 
 	def __init__(
 			self,

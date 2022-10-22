@@ -24,7 +24,12 @@ class Parser:
 	# Right associative.
 	#
 	# <var> => <exp>
-	pp_lambda_fun = (pp.Suppress("λ") | pp.Suppress("\\")) + pp_macro + pp.Suppress(".") + pp_expr
+	pp_lambda_fun = (
+		(pp.Suppress("λ") | pp.Suppress("\\")) +
+		pp.Group(pp.Char(pp.alphas)[1, ...]) +
+		pp.Suppress(".") +
+		pp_expr
+	)
 	pp_lambda_fun.set_parse_action(tokens.lambda_func.from_parse)
 
 	# Assignment.
