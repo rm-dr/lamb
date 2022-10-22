@@ -43,7 +43,7 @@ r.run_lines([
 	"OR = λab.(a T b)",
 	"XOR = λab.(a (NOT a b) b)",
 	"w = λx.(x x)",
-	"W = (w w)",
+	"W = w w",
 	"Y = λf.( (λx.(f (x x))) (λx.(f (x x))) )",
 	"PAIR = λabi.( i a b )",
 	"inc = λnfa.(f (n f a))",
@@ -90,7 +90,13 @@ while True:
 
 	# If this line defined a macro, print nothing.
 	if isinstance(x, runner.MacroStatus):
-		pass
+		printf(FormattedText([
+			("#FFFFFF", "Set "),
+			("#FF00FF", x.macro_label),
+			("#FFFFFF", " to "),
+			("#FFFFFF", str(x.macro_expr))
+		]))
+
 
 	if isinstance(x, runner.CommandStatus):
 		printf(x.formatted_text)

@@ -77,7 +77,8 @@ class Runner:
 
 			return MacroStatus(
 				was_rewritten = was_rewritten,
-				macro_label = e.label
+				macro_label = e.label,
+				macro_expr = e.exp
 			)
 
 		# If this line is a command, do the command.

@@ -2,7 +2,6 @@
 
 
 ## Todo (pre-release):
- - Fix parser (call parentheses)
  - Good command parsing (`:save`, `:load`, are a bare minimum)
  - Python files: installable, package list, etc
  - $\alpha$-equivalence check
@@ -18,6 +17,7 @@
  - Warn when overwriting macro
  - Syntax highlighting: parenthesis, bound variables, macros, etc
  - Pin header to top of screen
+ - Parser is a bit slow. Maybe we can do better?
 
 ## Mention in Docs
  - lambda functions only work with single-letter arguments

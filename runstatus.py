@@ -17,16 +17,19 @@ class MacroStatus(RunStatus):
 	Values:
 	`was_rewritten`:	If true, an old macro was replaced.
 	`macro_label`:		The name of the macro we just made.
+	`macro_expr`:		The expr of the macro we just made.
 	"""
 
 	def __init__(
 		self,
 		*,
 		was_rewritten: bool,
-		macro_label: str
+		macro_label: str,
+		macro_expr
 	):
 		self.was_rewritten = was_rewritten
 		self.macro_label = macro_label
+		self.macro_expr = macro_expr
 
 
 class StopReason(enum.Enum):
