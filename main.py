@@ -86,6 +86,9 @@ while True:
 	if isinstance(x, runner.MacroStatus):
 		pass
 
+	if isinstance(x, runner.CommandStatus):
+		printf(x.formatted_text)
+
 	# If this line was an expression, print reduction status
 	elif isinstance(x, runner.ReduceStatus):
 		printf(FormattedText([

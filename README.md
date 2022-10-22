@@ -3,7 +3,7 @@
 
 ## Todo (pre-release):
  - Fix parser (call parentheses)
- - Good command parsing (`:help`, `:save`, `:load`, `:macros`, `:clear` are a bare minimum)
+ - Good command parsing (`:save`, `:load`, are a bare minimum)
  - Python files: installable, package list, etc
  - $\alpha$-equivalence check
  - Versioning
@@ -16,3 +16,4 @@
  - Maybe a better icon?
  - Warn when overwriting macro
  - Syntax highlighting: parenthesis, bound variables, macros, etc
+ - Pin header to top of screen

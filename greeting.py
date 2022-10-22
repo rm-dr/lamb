@@ -1,6 +1,6 @@
 from prompt_toolkit.styles import Style
 from prompt_toolkit.formatted_text import HTML, to_formatted_text
-from prompt_toolkit import print_formatted_text
+from prompt_toolkit import print_formatted_text as printf
 
 
 
@@ -30,7 +30,10 @@ style = Style.from_dict({
 	"_l": "#FF6600 bold",
 
 	# Subtitle
-	"_s": "#B4EC85 bold"
+	"_s": "#B4EC85 bold",
+
+	# :help message
+	"_p": "#AAAAAA"
 })
 
 html = HTML(f"""
@@ -46,8 +49,9 @@ html = HTML(f"""
      `'._.--._.'
 
 <_s> A λ calculus engine</_s>
+<_p> Type :help for help</_p>
 
 """[1:-1])
 
 def show():
-	print_formatted_text(html, style = style)
+	printf(html, style = style)
