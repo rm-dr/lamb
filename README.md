@@ -17,3 +17,5 @@
  - step-by-step reduction
  - Documentation in README
  - Maybe a better icon?
+ - Warn when overwriting macro
+ - Syntax highlighting: parenthesis, bound variables, macros, etc

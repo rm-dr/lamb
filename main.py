@@ -1,6 +1,6 @@
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
-from prompt_toolkit import print_formatted_text
+from prompt_toolkit import print_formatted_text as printf
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.formatted_text import to_plain_text
 from prompt_toolkit.key_binding import KeyBindings
@@ -8,7 +8,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from pyparsing import exceptions as ppx
 
 from parser import Parser
-from runner import Runner
+import runner
 import tokens
 import greeting
 
@@ -27,12 +27,13 @@ session = PromptSession(
 )
 
 
+printf("\n")
 greeting.show()
 
 
 
 
-r = Runner()
+r = runner.Runner()
 
 r.run_lines([
 	"T = λa.λb.a",
@@ -57,31 +58,47 @@ while True:
 
 	# Catch Ctrl-C and Ctrl-D
 	except KeyboardInterrupt:
-		print("")
+		printf("\n\nGoodbye.\n")
 		break
 	except EOFError:
-		print("")
+		printf("\n\nGoodbye.\n")
 		break
 
+	# Skip empty lines
 	if i.strip() == "":
 		continue
 
 
+	# Try to run an input line.
+	# Catch parse errors and point them out.
 	try:
 		x = r.run(i)
 	except ppx.ParseException as e:
 		l = len(to_plain_text(session.message))
-		print_formatted_text(FormattedText([
+		printf(FormattedText([
 			("#FF0000", " "*(e.loc + l) + "^\n"),
 			("#FF0000", f"Syntax error at char {e.loc}."),
 			("#FFFFFF", "\n")
 		]))
 		continue
 
+	# If this line defined a macro, print nothing.
+	if isinstance(x, runner.MacroStatus):
+		pass
 
-	print_formatted_text(FormattedText([
-		("#00FF00", "    = "),
-		("#FFFFFF", str(x))
-	]))
+	# If this line was an expression, print reduction status
+	elif isinstance(x, runner.ReduceStatus):
+		printf(FormattedText([
+
+			("#00FF00 bold", f"\nExit reason: "),
+			x.stop_reason.value,
+
+			("#00FF00 bold", f"\nReduction count: "),
+			("#FFFFFF", str(x.reduction_count)),
+
+
+			("#00FF00 bold", "\n\n    => "),
+			("#FFFFFF", str(x.result)),
+		]))
 
 	print("")
