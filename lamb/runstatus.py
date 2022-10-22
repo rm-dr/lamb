@@ -1,7 +1,7 @@
-import enum
-import tokens
 from prompt_toolkit.formatted_text import FormattedText
+import enum
 
+import lamb.tokens as tokens
 
 class RunStatus:
 	"""

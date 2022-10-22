@@ -1,8 +1,8 @@
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.shortcuts import clear as clear_screen
 
-from runstatus import CommandStatus
-import greeting
+from lamb.runstatus import CommandStatus
+import lamb.utils as utils
 
 
 
@@ -35,7 +35,7 @@ def macros(runner):
 @lamb_command(help_text = "Clear the screen")
 def clear(runner):
 	clear_screen()
-	greeting.show()
+	utils.show_greeting()
 
 
 @lamb_command(help_text = "Print this help")

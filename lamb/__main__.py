@@ -7,10 +7,11 @@ from prompt_toolkit.key_binding import KeyBindings
 
 from pyparsing import exceptions as ppx
 
-from parser import Parser
-import runner
-import tokens
-import greeting
+from lamb.parser import Parser
+import lamb.runner as runner
+import lamb.runstatus as rs
+import lamb.tokens as tokens
+import lamb.utils as utils
 
 
 # Replace "\" with a pretty "λ" in the prompt
@@ -27,10 +28,7 @@ session = PromptSession(
 )
 
 
-printf("\n")
-greeting.show()
-
-
+utils.show_greeting()
 
 
 r = runner.Runner()
@@ -89,7 +87,7 @@ while True:
 		continue
 
 	# If this line defined a macro, print nothing.
-	if isinstance(x, runner.MacroStatus):
+	if isinstance(x, rs.MacroStatus):
 		printf(FormattedText([
 			("#FFFFFF", "Set "),
 			("#FF00FF", x.macro_label),
@@ -98,11 +96,11 @@ while True:
 		]))
 
 
-	if isinstance(x, runner.CommandStatus):
+	if isinstance(x, rs.CommandStatus):
 		printf(x.formatted_text)
 
 	# If this line was an expression, print reduction status
-	elif isinstance(x, runner.ReduceStatus):
+	elif isinstance(x, rs.ReduceStatus):
 		printf(FormattedText([
 
 			("#00FF00 bold", f"\nExit reason: "),
@@ -116,4 +114,4 @@ while True:
 			("#FFFFFF", str(x.result)),
 		]))
 
-	print("")
+	printf("")

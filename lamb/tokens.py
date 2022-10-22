@@ -1,6 +1,4 @@
-from ast import Lambda
 import enum
-
 
 class ReductionError(Exception):
 	"""

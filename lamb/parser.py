@@ -1,6 +1,7 @@
 import pyparsing as pp
-import tokens
-import utils
+
+import lamb.tokens as tokens
+import lamb.utils as utils
 
 class Parser:
 	lp = pp.Suppress("(")
@@ -68,12 +69,10 @@ class Parser:
 
 	@staticmethod
 	def parse_line(line):
-		k = Parser.pp_all.parse_string(
+		return Parser.pp_all.parse_string(
 			line,
 			parse_all = True
 		)[0]
-		print(k)
-		return k
 
 	@staticmethod
 	def run_tests(lines):
