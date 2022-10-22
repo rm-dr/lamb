@@ -1,4 +1,5 @@
 from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.formatted_text import HTML
 import enum
 
 import lamb.tokens as tokens
@@ -33,10 +34,10 @@ class MacroStatus(RunStatus):
 
 
 class StopReason(enum.Enum):
-	BETA_NORMAL		= ("#FFFFFF", "β-normal form")
-	LOOP_DETECTED	= ("#FFFF00", "loop detected")
-	MAX_EXCEEDED	= ("#FFFF00", "too many reductions")
-	INTERRUPT		= ("#FF0000", "user interrupt")
+	BETA_NORMAL		= ("class:text", "β-normal form")
+	LOOP_DETECTED	= ("class:warn", "loop detected")
+	MAX_EXCEEDED	= ("class:err", "too many reductions")
+	INTERRUPT		= ("class:warn", "user interrupt")
 
 
 class ReduceStatus(RunStatus):
@@ -71,6 +72,6 @@ class CommandStatus(RunStatus):
 	def __init__(
 		self,
 		*,
-		formatted_text: FormattedText
+		formatted_text: FormattedText | HTML
 	):
 		self.formatted_text = formatted_text

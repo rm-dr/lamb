@@ -16,18 +16,6 @@ class Runner:
 		# If None, no maximum is enforced.
 		self.reduction_limit: int | None = 300
 
-	def exec_command(self, command: tokens.command) -> rs.CommandStatus:
-		if command.name in commands.commands:
-			return commands.run(command, self)
-
-		# Handle unknown commands
-		else:
-			return rs.CommandStatus(
-				formatted_text = FormattedText([
-					("#FFFF00", f"Unknown command \"{command}\"")
-				])
-			)
-
 
 	def reduce_expression(self, expr: tokens.LambdaToken) -> rs.ReduceStatus:
 
@@ -58,7 +46,7 @@ class Runner:
 		return rs.ReduceStatus(
 			reduction_count = i - macro_expansions,
 			stop_reason = rs.StopReason.MAX_EXCEEDED,
-			result = r.output  # type: ignore
+			result = r.output # type: ignore
 		)
 
 
@@ -81,7 +69,7 @@ class Runner:
 
 		# If this line is a command, do the command.
 		elif isinstance(e, tokens.command):
-			return self.exec_command(e)
+			return commands.run(e, self)
 
 		# If this line is a plain expression, reduce it.
 		elif isinstance(e, tokens.LambdaToken):

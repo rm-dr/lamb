@@ -22,8 +22,9 @@ def _(event):
 
 session = PromptSession(
 	message = FormattedText([
-		("#00FFFF", "~~> ")
+		("class:prompt", "~~> ")
 	]),
+	style = utils.style,
 	key_bindings = bindings
 )
 
@@ -74,44 +75,42 @@ while True:
 	except ppx.ParseException as e:
 		l = len(to_plain_text(session.message))
 		printf(FormattedText([
-			("#FF0000", " "*(e.loc + l) + "^\n"),
-			("#FF0000", f"Syntax error at char {e.loc}."),
-			("#FFFFFF", "\n")
+			("class:err", " "*(e.loc + l) + "^\n"),
+			("class:err", f"Syntax error at char {e.loc}."),
+			("class:text", "\n")
 		]))
 		continue
 	except tokens.ReductionError as e:
 		printf(FormattedText([
-			("#FF0000", f"{e.msg}"),
-			("#FFFFFF", "\n")
-		]))
+			("class:err", f"{e.msg}\n")
+		]), style = utils.style)
 		continue
 
 	# If this line defined a macro, print nothing.
 	if isinstance(x, rs.MacroStatus):
 		printf(FormattedText([
-			("#FFFFFF", "Set "),
-			("#FF00FF", x.macro_label),
-			("#FFFFFF", " to "),
-			("#FFFFFF", str(x.macro_expr))
-		]))
+			("class:text", "Set "),
+			("class:syn_macro", x.macro_label),
+			("class:text", " to "),
+			("class:text", str(x.macro_expr))
+		]), style = utils.style)
 
 
 	if isinstance(x, rs.CommandStatus):
-		printf(x.formatted_text)
+		printf(x.formatted_text, style = utils.style)
 
 	# If this line was an expression, print reduction status
 	elif isinstance(x, rs.ReduceStatus):
 		printf(FormattedText([
-
-			("#00FF00 bold", f"\nExit reason: "),
+			("class:result_header", f"\nExit reason: "),
 			x.stop_reason.value,
 
-			("#00FF00 bold", f"\nReduction count: "),
-			("#FFFFFF", str(x.reduction_count)),
+			("class:result_header", f"\nReduction count: "),
+			("class:text", str(x.reduction_count)),
 
 
-			("#00FF00 bold", "\n\n    => "),
-			("#FFFFFF", str(x.result)),
-		]))
+			("class:result_header", "\n\n    => "),
+			("class:text", str(x.result)),
+		]), style = utils.style)
 
 	printf("")

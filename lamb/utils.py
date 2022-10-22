@@ -30,6 +30,38 @@ def autochurch(results):
 	)
 
 
+style = Style.from_dict({
+	# Basic formatting
+	"text": "#FFFFFF",
+	"warn": "#FFFF00",
+	"err": "#FF0000",
+	"prompt": "#00FFFF",
+
+	# Syntax
+	"syn_macro": "#FF00FF",
+	"syn_lambda": "#FF00FF",
+	"syn_bound": "#FF00FF",
+
+	# Titles for reduction results
+	"result_header": "#B4EC85 bold",
+
+	# Command formatting
+	# cmd_h:    section titles
+	# cmd_code: example snippets
+	# cmd_text: regular text
+	# cmd_key:  keyboard keys, usually one character
+	"cmd_h": "#FF6600 bold",
+	"cmd_code": "#AAAAAA italic",
+	"cmd_text": "#FFFFFF",
+	"cmd_key": "#B4EC85 bold",
+
+	# Only used in greeting
+	"_v": "#B4EC85 bold",
+	"_l": "#FF6600 bold",
+	"_s": "#B4EC85 bold",
+	"_p": "#AAAAAA"
+})
+
 
 def show_greeting():
 	#   |  _.._ _.|_
@@ -62,19 +94,4 @@ def show_greeting():
 		"<_s> A λ calculus engine</_s>",
 		"<_p> Type :help for help</_p>",
 		""
-	])), style = Style.from_dict({
-		# Heading
-		"_h": "#FFFFFF bold",
-
-		# Version
-		"_v": "#B4EC85 bold",
-
-		# Lambda
-		"_l": "#FF6600 bold",
-
-		# Subtitle
-		"_s": "#B4EC85 bold",
-
-		# :help message
-		"_p": "#AAAAAA"
-	}))
+	])), style = style)

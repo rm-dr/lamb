@@ -7,6 +7,7 @@
  - Prettyprint functions (combine args, rename bound variables)
  - Write a nice README
  - Handle or avoid recursion errors
+ - Fix colors
 
 ## Todo:
  - live syntax check
