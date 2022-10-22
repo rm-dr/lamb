@@ -6,6 +6,8 @@
  - $\alpha$-equivalence check
  - Prettyprint functions (combine args, rename bound variables)
  - Write a nice README
+ - Delete macros
+ - Handle or avoid recursion errors
 
 ## Todo:
  - live syntax check
