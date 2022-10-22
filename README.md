@@ -7,8 +7,6 @@
  - Python files: installable, package list, etc
  - $\alpha$-equivalence check
  - Versioning
- - Clean up runner & printing
- - Count reductions
 
 ## Todo:
  - live syntax check
