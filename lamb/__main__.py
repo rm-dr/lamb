@@ -8,7 +8,6 @@ from prompt_toolkit.lexers import Lexer
 
 from pyparsing import exceptions as ppx
 
-from lamb.parser import Parser
 import lamb.runner as runner
 import lamb.runstatus as rs
 import lamb.tokens as tokens
@@ -23,26 +22,28 @@ class LambdaLexer(Lexer):
 			return [("class:text", str(document.lines[line_no]))]
 		return inner
 
-# Replace "\" with a pretty "λ" in the prompt
+
+utils.show_greeting()
+
+
+# Replace "\" with pretty "λ"s
 bindings = KeyBindings()
 @bindings.add("\\")
 def _(event):
 	event.current_buffer.insert_text("λ")
 
-session = PromptSession(
-	message = FormattedText([
+
+r = runner.Runner(
+	prompt_session = PromptSession(
+		style = utils.style,
+		lexer = LambdaLexer(),
+		key_bindings = bindings
+	),
+
+	prompt_message = FormattedText([
 		("class:prompt", "~~> ")
 	]),
-	style = utils.style,
-	lexer = LambdaLexer(),
-	key_bindings = bindings
 )
-
-
-utils.show_greeting()
-
-
-r = runner.Runner()
 
 r.run_lines([
 	"T = λab.a",
@@ -63,7 +64,7 @@ r.run_lines([
 
 while True:
 	try:
-		i = session.prompt()
+		i = r.prompt()
 
 	# Catch Ctrl-C and Ctrl-D
 	except KeyboardInterrupt:
@@ -83,7 +84,7 @@ while True:
 	try:
 		x = r.run(i)
 	except ppx.ParseException as e:
-		l = len(to_plain_text(session.message))
+		l = len(to_plain_text(r.prompt_session.message))
 		printf(FormattedText([
 			("class:err", " "*(e.loc + l) + "^\n"),
 			("class:err", f"Syntax error at char {e.loc}."),
@@ -107,7 +108,7 @@ while True:
 
 
 	if isinstance(x, rs.CommandStatus):
-		printf(x.formatted_text, style = utils.style)
+		pass
 
 	# If this line was an expression, print reduction status
 	elif isinstance(x, rs.ReduceStatus):

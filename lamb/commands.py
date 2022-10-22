@@ -1,8 +1,12 @@
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.formatted_text import HTML
+from prompt_toolkit import print_formatted_text as printf
 from prompt_toolkit.shortcuts import clear as clear_screen
 
-from lamb.runstatus import CommandStatus
+import os.path
+
+from pyparsing import exceptions as ppx
+import lamb.runstatus as rs
 import lamb.utils as utils
 
 
@@ -16,60 +20,165 @@ def lamb_command(*, help_text: str):
 		help_texts[func.__name__] = help_text
 	return inner
 
-def run(command, runner):
+def run(command, runner) -> None:
 	if command.name not in commands:
-		return CommandStatus(
-			formatted_text = FormattedText([
+		printf(
+			FormattedText([
 				("class:warn", f"Unknown command \"{command.name}\"")
-			])
+			]),
+			style = utils.style
 		)
 	else:
-		return commands[command.name](command, runner)
+		commands[command.name](command, runner)
+
+
+@lamb_command(help_text = "Save macros to a file")
+def save(command, runner) -> None:
+	if len(command.args) != 1:
+		printf(
+			HTML(
+				"<err>Command <cmd_code>:save</cmd_code> takes exactly one argument.</err>"
+			),
+			style = utils.style
+		)
+		return
+
+	target = command.args[0]
+	if os.path.exists(target):
+		confirm = runner.prompt_session.prompt(
+			message = FormattedText([
+				("class:warn", "File exists. Overwrite? "),
+				("class:text", "[yes/no]: ")
+			])
+		).lower()
+
+		if confirm != "yes":
+			printf(
+				HTML(
+					"<err>Cancelled.</err>"
+				),
+				style = utils.style
+			)
+			return
+
+	with open(target, "w") as f:
+		f.write("\n".join(
+			[f"{n} = {e}" for n, e in runner.macro_table.items()]
+		))
+
+	printf(
+		HTML(
+			f"Wrote {len(runner.macro_table)} macros to <cmd_code>{target}</cmd_code>"
+		),
+		style = utils.style
+	)
+
+
+@lamb_command(help_text = "Load macros from a file")
+def load(command, runner):
+	if len(command.args) != 1:
+		printf(
+			HTML(
+				"<err>Command <cmd_code>:load</cmd_code> takes exactly one argument.</err>"
+			),
+			style = utils.style
+		)
+		return
+
+	target = command.args[0]
+	if not os.path.exists(target):
+		printf(
+			HTML(
+				f"<err>File {target} doesn't exist.</err>"
+			),
+			style = utils.style
+		)
+		return
+
+	with open(target, "r") as f:
+		lines = [x.strip() for x in f.readlines()]
+
+	for i in range(len(lines)):
+		l = lines[i]
+		try:
+			x = runner.run(l, macro_only = True)
+		except ppx.ParseException as e:
+			printf(
+				FormattedText([
+					("class:warn", f"Syntax error on line {i+1:02}: "),
+					("class:cmd_code", l[:e.loc]),
+					("class:err", l[e.loc]),
+					("class:cmd_code", l[e.loc+1:])
+				]),
+				style = utils.style
+			)
+		except rs.NotAMacro:
+			printf(
+				FormattedText([
+					("class:warn", f"Skipping line {i+1:02}: "),
+					("class:cmd_code", l),
+					("class:warn", f" is not a macro definition.")
+				]),
+				style = utils.style
+			)
+		else:
+			printf(
+				FormattedText([
+					("class:ok", f"Loaded {x.macro_label}: "),
+					("class:cmd_code", str(x.macro_expr))
+				]),
+				style = utils.style
+			)
+
+
 
 @lamb_command(help_text = "Delete a macro")
-def mdel(command, runner):
+def mdel(command, runner) -> None:
 	if len(command.args) != 1:
-		return CommandStatus(
-			formatted_text = HTML(
-				"<warn>Command <cmd_code>:mdel</cmd_code> takes exactly one argument.</warn>"
-			)
+		printf(
+			HTML(
+				"<err>Command <cmd_code>:mdel</cmd_code> takes exactly one argument.</err>"
+			),
+			style = utils.style
 		)
+		return
 
 	target = command.args[0]
 	if target not in runner.macro_table:
-		return CommandStatus(
-			formatted_text = HTML(
+		printf(
+			HTML(
 				f"<warn>Macro \"{target}\" is not defined</warn>"
-			)
+			),
+			style = utils.style
 		)
+		return
 
 	del runner.macro_table[target]
 
-@lamb_command(help_text = "Show macros")
-def macros(command, runner):
-	return CommandStatus(
 
-		# Can't use HTML here, certain characters might break it.
-		formatted_text = FormattedText([
+
+@lamb_command(help_text = "Show macros")
+def macros(command, runner) -> None:
+	printf(FormattedText([
 			("class:cmd_h", "\nDefined Macros:\n"),
 		] +
 		[
 			("class:cmd_text", f"\t{name} \t {exp}\n")
 			for name, exp in runner.macro_table.items()
-		]
-		)
+		]),
+		style = utils.style
 	)
 
 @lamb_command(help_text = "Clear the screen")
-def clear(command, runner):
+def clear(command, runner) -> None:
 	clear_screen()
 	utils.show_greeting()
 
 
 @lamb_command(help_text = "Print this help")
-def help(command, runner):
-	return CommandStatus(
-		formatted_text = HTML(
+def help(command, runner) -> None:
+	printf(
+		HTML(
 			"\n<cmd_text>" +
 			"<cmd_h>Usage:</cmd_h>" +
 			"\n" +
@@ -86,5 +195,6 @@ def help(command, runner):
 				for name, text in help_texts.items()
 			]) +
 			"</cmd_text>"
-		)
+		),
+		style = utils.style
 	)

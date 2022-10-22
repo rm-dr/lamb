@@ -4,6 +4,16 @@ import enum
 
 import lamb.tokens as tokens
 
+
+class NotAMacro(Exception):
+	"""
+	Raised when we try to run a non-macro line
+	while enforcing macro_only in Runner.run().
+
+	This should be caught and elegantly presented to the user.
+	"""
+	pass
+
 class RunStatus:
 	"""
 	Base class for run status.
@@ -64,14 +74,11 @@ class ReduceStatus(RunStatus):
 class CommandStatus(RunStatus):
 	"""
 	Returned when a command is executed.
+	Doesn't do anything interesting.
 
 	Values:
-	`formatted_text`: What to print after this command is executed
+	`cmd`: The command that was run, without a colon.
 	"""
 
-	def __init__(
-		self,
-		*,
-		formatted_text: FormattedText | HTML
-	):
-		self.formatted_text = formatted_text
+	def __init__(self, *, cmd: str):
+		self.cmd = cmd

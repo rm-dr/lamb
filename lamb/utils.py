@@ -36,6 +36,7 @@ style = Style.from_dict({
 	"warn": "#FFFF00",
 	"err": "#FF0000",
 	"prompt": "#00FFFF",
+	"ok": "#B4EC85",
 
 	# Syntax
 	"syn_macro": "#FF00FF",

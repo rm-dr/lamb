@@ -1,5 +1,4 @@
-from distutils.cmd import Command
-from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit import PromptSession
 
 import lamb.commands as commands
 from lamb.parser import Parser
@@ -7,14 +6,18 @@ import lamb.tokens as tokens
 import lamb.runstatus as rs
 
 
-
 class Runner:
-	def __init__(self):
+	def __init__(self, prompt_session: PromptSession, prompt_message):
 		self.macro_table = {}
+		self.prompt_session = prompt_session
+		self.prompt_message = prompt_message
 
 		# Maximum amount of reductions.
 		# If None, no maximum is enforced.
 		self.reduction_limit: int | None = 300
+
+	def prompt(self):
+		return self.prompt_session.prompt(message = self.prompt_message)
 
 
 	def reduce_expression(self, expr: tokens.LambdaToken) -> rs.ReduceStatus:
@@ -51,7 +54,7 @@ class Runner:
 
 
 	# Apply a list of definitions
-	def run(self, line: str) -> rs.RunStatus:
+	def run(self, line: str, *, macro_only = False) -> rs.RunStatus:
 		e = Parser.parse_line(line)
 
 		# If this line is a macro definition, save the macro.
@@ -67,14 +70,20 @@ class Runner:
 				macro_expr = e.exp
 			)
 
+		elif macro_only:
+			raise rs.NotAMacro()
+
 		# If this line is a command, do the command.
 		elif isinstance(e, tokens.command):
-			return commands.run(e, self)
+			commands.run(e, self)
+			return rs.CommandStatus(cmd = e.name)
 
 		# If this line is a plain expression, reduce it.
 		elif isinstance(e, tokens.LambdaToken):
 			e.bind_variables()
 			return self.reduce_expression(e)
+
+		# We shouldn't ever get here.
 		else:
 			raise TypeError(f"I don't know what to do with a {type(e)}")
 
