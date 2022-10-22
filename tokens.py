@@ -1,6 +1,16 @@
 from ast import Lambda
 import enum
 
+
+class ReductionError(Exception):
+	"""
+	Raised when we encounter an error while reducing.
+
+	These should be caught and elegantly presented to the user.
+	"""
+	def __init__(self, msg: str):
+		self.msg = msg
+
 class ReductionType(enum.Enum):
 	MACRO_EXPAND	= enum.auto()
 	MACRO_TO_FREE	= enum.auto()
@@ -137,7 +147,7 @@ class macro(LambdaToken):
 				)
 
 		elif not auto_free_vars:
-			raise NameError(f"Name {self.name} is not defined!")
+			raise ReductionError(f"Macro {self.name} is not defined")
 
 		else:
 			return ReductionStatus(
@@ -273,7 +283,7 @@ class lambda_func(LambdaToken):
 		if not ((placeholder is None) and (val is None)):
 			if not binding_self and isinstance(self.input, macro):
 				if self.input == placeholder:
-					raise NameError("Bound variable name conflict.")
+					raise ReductionError(f"Variable name conflict: \"{self.input.name}\"")
 
 		# If this function's variables haven't been bound yet,
 		# bind them BEFORE binding the outer function's.

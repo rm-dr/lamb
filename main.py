@@ -81,6 +81,12 @@ while True:
 			("#FFFFFF", "\n")
 		]))
 		continue
+	except tokens.ReductionError as e:
+		printf(FormattedText([
+			("#FF0000", f"{e.msg}"),
+			("#FFFFFF", "\n")
+		]))
+		continue
 
 	# If this line defined a macro, print nothing.
 	if isinstance(x, runner.MacroStatus):
