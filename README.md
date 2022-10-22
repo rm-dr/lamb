@@ -7,10 +7,8 @@
  - Python files: installable, package list, etc
  - $\alpha$-equivalence check
  - Versioning
- - Automatic church numerals
  - Prettyprint functions (combine args, rename bound variables)
  - Documentation in README
- - Don't crash on errors
 
 ## Todo:
  - live syntax check
@@ -23,3 +21,4 @@
 
 ## Mention in Docs
  - lambda functions only work with single-letter arguments
+ - church numerals

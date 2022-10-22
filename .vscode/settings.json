@@ -1,7 +1,9 @@
 {
     "cSpell.words": [
+        "autochurch",
         "freevar",
         "pyparsing",
+        "runstatus",
         "subvar"
     ],
     "python.analysis.typeCheckingMode": "basic"

@@ -1,5 +1,6 @@
 import pyparsing as pp
 import tokens
+import utils
 
 class Parser:
 	"""
@@ -19,6 +20,9 @@ class Parser:
 	pp_expr = pp.Forward()
 	pp_macro = pp.Word(pp.alphas + "_")
 	pp_macro.set_parse_action(tokens.macro.from_parse)
+
+	pp_church = pp.Word(pp.nums)
+	pp_church.set_parse_action(utils.autochurch)
 
 	# Function definitions.
 	# Right associative.
@@ -50,7 +54,7 @@ class Parser:
 	pp_call <<= pp_expr[2, ...]
 	pp_call.set_parse_action(tokens.lambda_apply.from_parse)
 
-	pp_expr <<= pp_lambda_fun ^ (lp + pp_expr + rp) ^ pp_macro ^ (lp + pp_call + rp)
+	pp_expr <<= pp_lambda_fun ^ (lp + pp_expr + rp) ^ pp_macro ^ (lp + pp_call + rp) ^ pp_church
 	pp_all = pp_expr | pp_macro_def
 
 	pp_command = pp.Suppress(":") + pp.Word(pp.alphas + "_")
