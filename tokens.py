@@ -302,9 +302,9 @@ class lambda_func(LambdaToken):
 
 
 		# Bind variables inside this function.
-		if isinstance(self.output, macro):
+		if isinstance(self.output, macro) and placeholder is not None:
 			if self.output == placeholder:
-				self.output = val
+				self.output = val # type: ignore
 		elif isinstance(self.output, lambda_func):
 			self.output.bind_variables(placeholder, val)
 		elif isinstance(self.output, lambda_apply):
@@ -345,7 +345,7 @@ class lambda_func(LambdaToken):
 		calling_self = False
 		if bound_var is None:
 			calling_self = True
-			bound_var = self.input
+			bound_var = self.input # type: ignore
 		new_out = self.output
 		if isinstance(self.output, bound_variable):
 			if self.output == bound_var:
@@ -353,7 +353,7 @@ class lambda_func(LambdaToken):
 		elif isinstance(self.output, lambda_func):
 			new_out = self.output.apply(val, bound_var = bound_var)
 		elif isinstance(self.output, lambda_apply):
-			new_out = self.output.sub_bound_var(val, bound_var = bound_var)
+			new_out = self.output.sub_bound_var(val, bound_var = bound_var) # type: ignore
 
 		# If we're applying THIS function,
 		# just give the output
@@ -430,7 +430,7 @@ class lambda_apply(LambdaToken):
 		# everything below should still work as expected.
 		if isinstance(self.fn, macro) and placeholder is not None:
 			if self.fn == placeholder:
-				self.fn = val
+				self.fn = val # type: ignore
 		elif isinstance(self.fn, lambda_func):
 			self.fn.bind_variables(placeholder, val)
 		elif isinstance(self.fn, lambda_apply):
@@ -438,7 +438,7 @@ class lambda_apply(LambdaToken):
 
 		if isinstance(self.arg, macro) and placeholder is not None:
 			if self.arg == placeholder:
-				self.arg = val
+				self.arg = val # type: ignore
 		elif isinstance(self.arg, lambda_func):
 			self.arg.bind_variables(placeholder, val)
 		elif isinstance(self.arg, lambda_apply):

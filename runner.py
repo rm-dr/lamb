@@ -10,10 +10,6 @@ from runstatus import ReduceStatus
 from runstatus import CommandStatus
 
 
-
-
-
-
 class Runner:
 	def __init__(self):
 		self.macro_table = {}
@@ -43,7 +39,7 @@ class Runner:
 		i = 0
 		macro_expansions = 0
 
-		while i < self.reduction_limit:
+		while (self.reduction_limit is None) or (i < self.reduction_limit):
 			r = expr.reduce(self.macro_table)
 			expr = r.output
 
@@ -64,7 +60,7 @@ class Runner:
 		return ReduceStatus(
 			reduction_count = i - macro_expansions,
 			stop_reason = StopReason.MAX_EXCEEDED,
-			result = r.output
+			result = r.output  # type: ignore
 		)
 
 
@@ -89,9 +85,11 @@ class Runner:
 			return self.exec_command(e.name)
 
 		# If this line is a plain expression, reduce it.
-		else:
+		elif isinstance(e, tokens.LambdaToken):
 			e.bind_variables()
 			return self.reduce_expression(e)
+		else:
+			raise TypeError(f"I don't know what to do with a {type(e)}")
 
 
 	def run_lines(self, lines: list[str]):
