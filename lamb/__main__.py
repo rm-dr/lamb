@@ -52,13 +52,11 @@ r.run_lines([
 	"AND = λab.(a F b)",
 	"OR = λab.(a T b)",
 	"XOR = λab.(a (NOT a b) b)",
-	"w = λx.(x x)",
-	"W = w w",
+	"M = λx.(x x)",
+	"W = M M",
 	"Y = λf.( (λx.(f (x x))) (λx.(f (x x))) )",
 	"PAIR = λabi.( i a b )",
-	"inc = λnfa.(f (n f a))",
-	"zero = λax.x",
-	"one = λfx.(f x)"
+	"S = λnfa.(f (n f a))",
 ])
 
 
@@ -89,7 +87,7 @@ while True:
 			("class:err", " "*(e.loc + l) + "^\n"),
 			("class:err", f"Syntax error at char {e.loc}."),
 			("class:text", "\n")
-		]))
+		]), style = utils.style)
 		continue
 	except tokens.ReductionError as e:
 		printf(FormattedText([

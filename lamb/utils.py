@@ -6,31 +6,33 @@ from importlib.metadata import version
 import lamb.tokens as tokens
 
 
-def autochurch(results):
+def autochurch(runner):
 	"""
 	Makes a church numeral from an integer.
 	"""
 
-	num = int(results[0])
+	def inner(results):
+		num = int(results[0])
 
-	f = tokens.bound_variable()
-	a = tokens.bound_variable()
+		f = tokens.bound_variable("f", runner = runner)
+		a = tokens.bound_variable("a", runner = runner)
 
-	chain = a
+		chain = a
 
-	for i in range(num):
-		chain = tokens.lambda_apply(f, chain)
+		for i in range(num):
+			chain = tokens.lambda_apply(f, chain)
 
-	return tokens.lambda_func(
-		f,
-		tokens.lambda_func(
-			a,
-			chain
+		return tokens.lambda_func(
+			f,
+			tokens.lambda_func(
+				a,
+				chain
+			)
 		)
-	)
+	return inner
 
 
-style = Style.from_dict({
+style = Style.from_dict({ # type: ignore
 	# Basic formatting
 	"text": "#FFFFFF",
 	"warn": "#FFFF00",

@@ -15,7 +15,6 @@
  - Command and macro autocomplete
  - step-by-step reduction
  - Maybe a better icon?
- - Warn when overwriting macro
  - Syntax highlighting: parenthesis, bound variables, macros, etc
  - Pin header to top of screen
  - PyPi package

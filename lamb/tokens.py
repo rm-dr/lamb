@@ -40,16 +40,18 @@ class ReductionStatus:
 		# this will be false.
 		self.was_reduced = was_reduced
 
-
 class LambdaToken:
 	"""
 	Base class for all lambda tokens.
 	"""
 
+	def set_runner(self, runner):
+		self.runner = runner
+
 	def bind_variables(self) -> None:
 		pass
 
-	def reduce(self, macro_table) -> ReductionStatus:
+	def reduce(self) -> ReductionStatus:
 		return ReductionStatus(
 			was_reduced = False,
 			output = self
@@ -121,7 +123,6 @@ class macro(LambdaToken):
 
 	def reduce(
 			self,
-			macro_table = {},
 			*,
 			# To keep output readable, we avoid expanding macros as often as possible.
 			# Macros are irreducible if force_substitute is false.
@@ -132,10 +133,10 @@ class macro(LambdaToken):
 			auto_free_vars = True
 		) -> ReductionStatus:
 
-		if (self.name in macro_table) and force_substitute:
+		if (self.name in self.runner.macro_table) and force_substitute:
 			if force_substitute: # Only expand macros if we NEED to
 				return ReductionStatus(
-					output = macro_table[self.name],
+					output = self.runner.macro_table[self.name],
 					reduction_type = ReductionType.MACRO_EXPAND,
 					was_reduced = True
 				)
@@ -173,6 +174,11 @@ class macro_expression:
 			result[1]
 		)
 
+	def set_runner(self, runner):
+		self.exp.set_runner(runner)
+	def bind_variables(self):
+		self.exp.bind_variables()
+
 	def __init__(self, label: str, exp: LambdaToken):
 		self.label = label
 		self.exp = exp
@@ -184,14 +190,14 @@ class macro_expression:
 		return f"{self.label} := {self.exp}"
 
 
-bound_variable_counter = 0
 class bound_variable(LambdaToken):
-	def __init__(self, forced_id = None):
-		global bound_variable_counter
+	def __init__(self, name: str, *, runner, forced_id = None):
+		self.original_name = name
+		self.runner = runner
 
 		if forced_id is None:
-			self.identifier = bound_variable_counter
-			bound_variable_counter += 1
+			self.identifier = self.runner.bound_variable_counter
+			self.runner.bound_variable_counter += 1
 		else:
 			self.identifier = forced_id
 
@@ -201,7 +207,7 @@ class bound_variable(LambdaToken):
 		return self.identifier == other.identifier
 
 	def __repr__(self):
-		return f"<in {self.identifier}>"
+		return f"<{self.original_name} {self.identifier}>"
 
 class lambda_func(LambdaToken):
 	"""
@@ -219,14 +225,19 @@ class lambda_func(LambdaToken):
 	def from_parse(result):
 		if len(result[0]) == 1:
 			return lambda_func(
-				macro(result[0][0]),
+				result[0][0],
 				result[1]
 			)
 		else:
 			return lambda_func(
-				macro(result[0].pop(0)),
+				result[0].pop(0),
 				lambda_func.from_parse(result)
 			)
+
+	def set_runner(self, runner):
+		self.runner = runner
+		self.input.set_runner(runner)
+		self.output.set_runner(runner)
 
 	def __init__(
 			self,
@@ -280,10 +291,14 @@ class lambda_func(LambdaToken):
 		# We only need to check for collisions if we're
 		# binding another function's variable. If this
 		# function starts the bind chain, skip that step.
-		if not ((placeholder is None) and (val is None)):
+		if placeholder is not None:
 			if not binding_self and isinstance(self.input, macro):
 				if self.input == placeholder:
-					raise ReductionError(f"Variable name conflict: \"{self.input.name}\"")
+					raise ReductionError(f"Bound variable name conflict: \"{self.input.name}\"")
+
+				if self.input.name in self.runner.macro_table:
+					raise ReductionError(f"Bound variable name conflict: \"{self.input.name}\" is a macro")
+
 
 		# If this function's variables haven't been bound yet,
 		# bind them BEFORE binding the outer function's.
@@ -292,7 +307,10 @@ class lambda_func(LambdaToken):
 		# functions' variables, we won't be able to detect
 		# name conflicts.
 		if isinstance(self.input, macro) and not binding_self:
-			new_bound_var = bound_variable()
+			new_bound_var = bound_variable(
+				self.input.name,
+				runner = self.runner
+			)
 			self.bind_variables(
 				self.input,
 				new_bound_var,
@@ -310,15 +328,15 @@ class lambda_func(LambdaToken):
 		elif isinstance(self.output, lambda_apply):
 			self.output.bind_variables(placeholder, val)
 
-	def reduce(self, macro_table = {}) -> ReductionStatus:
+	def reduce(self) -> ReductionStatus:
 
-		r = self.output.reduce(macro_table)
+		r = self.output.reduce()
 
 		# If a macro becomes a free variable,
 		# reduce twice.
 		if r.reduction_type == ReductionType.MACRO_TO_FREE:
 			self.output = r.output
-			return self.reduce(macro_table)
+			return self.reduce()
 
 		return ReductionStatus(
 			was_reduced = r.was_reduced,
@@ -394,6 +412,11 @@ class lambda_apply(LambdaToken):
 				)] + result[2:]
 			)
 
+	def set_runner(self, runner):
+		self.runner = runner
+		self.fn.set_runner(runner)
+		self.arg.set_runner(runner)
+
 	def __init__(
 			self,
 			fn: LambdaToken,
@@ -416,9 +439,6 @@ class lambda_apply(LambdaToken):
 		"""
 		Does exactly what lambda_func.bind_variables does,
 		but acts on applications instead.
-
-		There will be little documentation in this method,
-		see lambda_func.bind_variables.
 		"""
 
 		if (placeholder is None) and (val != placeholder):
@@ -474,7 +494,7 @@ class lambda_apply(LambdaToken):
 			new_arg
 		)
 
-	def reduce(self, macro_table = {}) -> ReductionStatus:
+	def reduce(self) -> ReductionStatus:
 
 		# If we can directly apply self.fn, do so.
 		if isinstance(self.fn, lambda_func):
@@ -491,17 +511,16 @@ class lambda_apply(LambdaToken):
 				# Macros must be reduced before we apply them as functions.
 				# This is the only place we force substitution.
 				r = self.fn.reduce(
-					macro_table,
 					force_substitute = True
 				)
 			else:
-				r = self.fn.reduce(macro_table)
+				r = self.fn.reduce()
 
 			# If a macro becomes a free variable,
 			# reduce twice.
 			if r.reduction_type == ReductionType.MACRO_TO_FREE:
 				self.fn = r.output
-				return self.reduce(macro_table)
+				return self.reduce()
 
 			if r.was_reduced:
 				return ReductionStatus(
@@ -514,11 +533,11 @@ class lambda_apply(LambdaToken):
 				)
 
 			else:
-				r = self.arg.reduce(macro_table)
+				r = self.arg.reduce()
 
 				if r.reduction_type == ReductionType.MACRO_TO_FREE:
 					self.arg = r.output
-					return self.reduce(macro_table)
+					return self.reduce()
 
 				return ReductionStatus(
 					was_reduced = r.was_reduced,
