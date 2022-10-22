@@ -109,15 +109,36 @@ class macro(LambdaToken):
 			raise TypeError("Can only compare macro with macro")
 		return self.name == other.name
 
-	def reduce(self, macro_table = {}, *, auto_free_vars = True) -> ReductionStatus:
-		if self.name in macro_table:
-			return ReductionStatus(
-				output = macro_table[self.name],
-				reduction_type = ReductionType.MACRO_EXPAND,
-				was_reduced = True
-			)
+	def reduce(
+			self,
+			macro_table = {},
+			*,
+			# To keep output readable, we avoid expanding macros as often as possible.
+			# Macros are irreducible if force_substitute is false.
+			force_substitute = False,
+
+			# If this is false, error when macros aren't defined instead of
+			# invisibly making a free variable.
+			auto_free_vars = True
+		) -> ReductionStatus:
+
+		if (self.name in macro_table) and force_substitute:
+			if force_substitute: # Only expand macros if we NEED to
+				return ReductionStatus(
+					output = macro_table[self.name],
+					reduction_type = ReductionType.MACRO_EXPAND,
+					was_reduced = True
+				)
+			else: # Otherwise, do nothing.
+				return ReductionStatus(
+					output = self,
+					reduction_type = ReductionType.MACRO_EXPAND,
+					was_reduced = False
+				)
+
 		elif not auto_free_vars:
 			raise NameError(f"Name {self.name} is not defined!")
+
 		else:
 			return ReductionStatus(
 				output = free_variable(self.name),
@@ -450,7 +471,16 @@ class lambda_apply(LambdaToken):
 		# Otherwise, try to reduce self.fn.
 		# If that is impossible, try to reduce self.arg.
 		else:
-			r = self.fn.reduce(macro_table)
+			if isinstance(self.fn, macro):
+				# Macros must be reduced before we apply them as functions.
+				# This is the only place we force substitution.
+				r = self.fn.reduce(
+					macro_table,
+					force_substitute = True
+				)
+			else:
+				r = self.fn.reduce(macro_table)
+
 			# If a macro becomes a free variable,
 			# reduce twice.
 			if r.reduction_type == ReductionType.MACRO_TO_FREE:
