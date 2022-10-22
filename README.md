@@ -3,7 +3,7 @@
 
 ## Todo (pre-release):
  - Fix parser (call parentheses)
- - Good command parsing (`:help`, `:save`, `:load`, `:macros` as a bare minimum)
+ - Good command parsing (`:help`, `:save`, `:load`, `:macros`, `:clear` are a bare minimum)
  - Python files: installable, package list, etc
  - $\alpha$-equivalence check
  - Don't expand macros until you absolutely have to
