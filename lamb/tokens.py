@@ -79,6 +79,11 @@ class free_variable(LambdaToken):
 		return f"{self.label}"
 
 class command:
+	def set_runner(self, runner):
+		pass
+	def bind_variables(self):
+		pass
+
 	@staticmethod
 	def from_parse(result):
 		return command(
