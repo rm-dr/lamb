@@ -4,6 +4,7 @@ from prompt_toolkit import print_formatted_text as printf
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.formatted_text import to_plain_text
 from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.lexers import Lexer
 
 from pyparsing import exceptions as ppx
 
@@ -13,6 +14,14 @@ import lamb.runstatus as rs
 import lamb.tokens as tokens
 import lamb.utils as utils
 
+
+# Simple lexer for highlighting.
+# Improve this later.
+class LambdaLexer(Lexer):
+	def lex_document(self, document):
+		def inner(line_no):
+			return [("class:text", str(document.lines[line_no]))]
+		return inner
 
 # Replace "\" with a pretty "λ" in the prompt
 bindings = KeyBindings()
@@ -25,6 +34,7 @@ session = PromptSession(
 		("class:prompt", "~~> ")
 	]),
 	style = utils.style,
+	lexer = LambdaLexer(),
 	key_bindings = bindings
 )
 
