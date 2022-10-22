@@ -7,6 +7,8 @@
  - Write a nice README
  - Handle or avoid recursion errors
  - Fix colors
+ - Clean up files
+ - Print macro content if only a macro is typed
 
 ## Todo:
  - live syntax check
@@ -18,6 +20,8 @@
  - Pin header to top of screen
  - PyPi package
  - Smart alignment in all printouts
+ - Full-reduce option
+ - Set reduction limit command
 
 ## Mention in Docs
  - lambda functions only work with single-letter arguments

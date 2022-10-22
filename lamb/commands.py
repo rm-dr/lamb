@@ -191,7 +191,7 @@ def help(command, runner) -> None:
 			"<cmd_h>Commands:</cmd_h>"+
 			"\n" +
 			"\n".join([
-				f"\t{name} \t {text}"
+				f"\t<cmd_code>{name}</cmd_code> \t {text}"
 				for name, text in help_texts.items()
 			]) +
 			"</cmd_text>"
