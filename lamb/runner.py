@@ -1,3 +1,4 @@
+from tkinter import E
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit import print_formatted_text as printf
@@ -12,9 +13,10 @@ import lamb.utils as utils
 
 class StopReason(enum.Enum):
 	BETA_NORMAL		= ("class:text", "β-normal form")
-	LOOP_DETECTED	= ("class:warn", "loop detected")
-	MAX_EXCEEDED	= ("class:err", "too many reductions")
-	INTERRUPT		= ("class:warn", "user interrupt")
+	LOOP_DETECTED	= ("class:warn", "Loop detected")
+	MAX_EXCEEDED	= ("class:err", "Too many reductions")
+	INTERRUPT		= ("class:warn", "User interrupt")
+	RECURSION		= ("class:err", "Python Recursion Error")
 
 
 class Runner:
@@ -50,7 +52,10 @@ class Runner:
 		# Give the elements of this expression access to the runner.
 		# Runner must be set BEFORE variables are bound.
 		e.set_runner(self)
-		e.bind_variables()
+		if isinstance(e, tokens.macro_expression):
+			e.bind_variables(ban_macro_name = e.label)
+		else:
+			e.bind_variables()
 		return e
 
 
@@ -63,8 +68,14 @@ class Runner:
 		macro_expansions = 0
 
 		stop_reason = StopReason.MAX_EXCEEDED
+
 		while (self.reduction_limit is None) or (i < self.reduction_limit):
-			r = expr.reduce()
+
+			try:
+				r = expr.reduce()
+			except RecursionError:
+				stop_reason = StopReason.RECURSION
+				break
 			expr = r.output
 
 			#print(expr)
@@ -86,19 +97,37 @@ class Runner:
 			else:
 				i += 1
 
-		out_str = str(r.output) # type: ignore
+		if (
+			stop_reason == StopReason.BETA_NORMAL or
+			stop_reason == StopReason.LOOP_DETECTED
+			):
+			out_str = str(r.output) # type: ignore
 
-		printf(FormattedText([
-			("class:result_header", f"\nExit reason: "),
-			stop_reason.value,
+			printf(FormattedText([
+				("class:result_header", f"\nExit reason: "),
+				stop_reason.value,
 
-			("class:result_header", f"\nReduction count: "),
-			("class:text", str(i)),
+				("class:result_header", f"\nMacro expansions: "),
+				("class:text", str(macro_expansions)),
+
+				("class:result_header", f"\nReductions: "),
+				("class:text", str(i)),
 
 
-			("class:result_header", "\n\n    => "),
-			("class:text", out_str),
-		]), style = utils.style)
+				("class:result_header", "\n\n    => "),
+				("class:text", out_str),
+			]), style = utils.style)
+		else:
+			printf(FormattedText([
+				("class:result_header", f"\nExit reason: "),
+				stop_reason.value,
+
+				("class:result_header", f"\nMacro expansions: "),
+				("class:text", str(macro_expansions)),
+
+				("class:result_header", f"\nReductions: "),
+				("class:text", str(i)),
+			]), style = utils.style)
 
 	def save_macro(self, macro: tokens.macro_expression, *, silent = False) -> None:
 		was_rewritten = macro.label in self.macro_table

@@ -7,9 +7,7 @@
  - Write a nice README
  - Handle or avoid recursion errors
  - Fix colors
- - Clean up files
  - Print macro content if only a macro is typed
- - Don't expand numbers until you have to
 
 ## Todo:
  - live syntax check

@@ -50,7 +50,7 @@ class LambdaToken:
 	def set_runner(self, runner):
 		self.runner = runner
 
-	def bind_variables(self) -> None:
+	def bind_variables(self, *, ban_macro_name: str | None = None) -> None:
 		pass
 
 	def reduce(self) -> ReductionStatus:
@@ -127,12 +127,7 @@ class free_variable(LambdaToken):
 	def __str__(self):
 		return f"{self.label}"
 
-class command:
-	def set_runner(self, runner):
-		pass
-	def bind_variables(self):
-		pass
-
+class command(LambdaToken):
 	@staticmethod
 	def from_parse(result):
 		return command(
@@ -175,6 +170,10 @@ class macro(LambdaToken):
 			raise TypeError("Can only compare macro with macro")
 		return self.name == other.name
 
+	def bind_variables(self, *, ban_macro_name=None) -> None:
+		if self.name == ban_macro_name:
+			raise ReductionError(f"Cannot use macro \"{ban_macro_name}\" here.")
+
 	def reduce(
 			self,
 			*,
@@ -210,7 +209,7 @@ class macro(LambdaToken):
 				was_reduced = True
 			)
 
-class macro_expression:
+class macro_expression(LambdaToken):
 	"""
 	Represents a line that looks like
 		<name> = <expression>
@@ -229,8 +228,9 @@ class macro_expression:
 
 	def set_runner(self, runner):
 		self.expr.set_runner(runner)
-	def bind_variables(self):
-		self.expr.bind_variables()
+
+	def bind_variables(self, *, ban_macro_name: str | None = None):
+		self.expr.bind_variables(ban_macro_name = ban_macro_name)
 
 	def __init__(self, label: str, expr: LambdaToken):
 		self.label = label
@@ -314,7 +314,8 @@ class lambda_func(LambdaToken):
 			placeholder: macro | None = None,
 			val: bound_variable | None = None,
 			*,
-			binding_self: bool = False
+			binding_self: bool = False,
+			ban_macro_name: str | None = None
 		) -> None:
 		"""
 		Go through this function and all the functions inside it,
@@ -370,19 +371,22 @@ class lambda_func(LambdaToken):
 			self.bind_variables(
 				self.input,
 				new_bound_var,
-				binding_self = True
+				binding_self = True,
+				ban_macro_name = ban_macro_name
 			)
 			self.input = new_bound_var
 
 
 		# Bind variables inside this function.
 		if isinstance(self.output, macro) and placeholder is not None:
+			if self.output.name == ban_macro_name:
+				raise ReductionError(f"Cannot use macro \"{ban_macro_name}\" here.")
 			if self.output == placeholder:
 				self.output = val # type: ignore
 		elif isinstance(self.output, lambda_func):
-			self.output.bind_variables(placeholder, val)
+			self.output.bind_variables(placeholder, val, ban_macro_name = ban_macro_name)
 		elif isinstance(self.output, lambda_apply):
-			self.output.bind_variables(placeholder, val)
+			self.output.bind_variables(placeholder, val, ban_macro_name = ban_macro_name)
 
 	def reduce(self) -> ReductionStatus:
 
@@ -484,7 +488,9 @@ class lambda_apply(LambdaToken):
 	def bind_variables(
 			self,
 			placeholder: macro | None = None,
-			val: bound_variable | None = None
+			val: bound_variable | None = None,
+			*,
+			ban_macro_name: str | None = None
 		) -> None:
 		"""
 		Does exactly what lambda_func.bind_variables does,
@@ -499,20 +505,24 @@ class lambda_apply(LambdaToken):
 		# If val and placeholder are None,
 		# everything below should still work as expected.
 		if isinstance(self.fn, macro) and placeholder is not None:
+			if self.fn.name == ban_macro_name:
+				raise ReductionError(f"Cannot use macro \"{ban_macro_name}\" here.")
 			if self.fn == placeholder:
 				self.fn = val # type: ignore
 		elif isinstance(self.fn, lambda_func):
-			self.fn.bind_variables(placeholder, val)
+			self.fn.bind_variables(placeholder, val, ban_macro_name = ban_macro_name)
 		elif isinstance(self.fn, lambda_apply):
-			self.fn.bind_variables(placeholder, val)
+			self.fn.bind_variables(placeholder, val, ban_macro_name = ban_macro_name)
 
 		if isinstance(self.arg, macro) and placeholder is not None:
+			if self.arg.name == ban_macro_name:
+				raise ReductionError(f"Cannot use macro \"{ban_macro_name}\" here.")
 			if self.arg == placeholder:
 				self.arg = val # type: ignore
 		elif isinstance(self.arg, lambda_func):
-			self.arg.bind_variables(placeholder, val)
+			self.arg.bind_variables(placeholder, val, ban_macro_name = ban_macro_name)
 		elif isinstance(self.arg, lambda_apply):
-			self.arg.bind_variables(placeholder, val)
+			self.arg.bind_variables(placeholder, val, ban_macro_name = ban_macro_name)
 
 	def sub_bound_var(
 		self,
