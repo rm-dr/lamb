@@ -3,7 +3,7 @@
 
 ## Todo (pre-release):
  - $\alpha$-equivalence check
- - Prettyprint functions (combine args, rename bound variables)
+ - Prettyprint functions (rename bound variables)
  - Write a nice README
  - Handle or avoid recursion errors
  - Fix colors

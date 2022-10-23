@@ -67,9 +67,9 @@ class LambdaParser:
 	def __init__(
 			self,
 			*,
-			#action_command,
-			#action_macro_def,
-			#action_church,
+			action_command,
+			action_macro_def,
+			action_church,
 			action_func,
 			action_bound,
 			action_macro,
@@ -78,9 +78,9 @@ class LambdaParser:
 
 		self.make_parser()
 
-		#self.pp_command.set_parse_action(action_command)
-		#self.pp_macro_def.set_parse_action(action_macro_def)
-		#self.pp_church.set_parse_action(action_church)
+		self.pp_command.set_parse_action(action_command)
+		self.pp_macro_def.set_parse_action(action_macro_def)
+		self.pp_church.set_parse_action(action_church)
 		self.pp_lambda_fun.set_parse_action(action_func)
 		self.pp_macro.set_parse_action(action_macro)
 		self.pp_bound.set_parse_action(action_bound)
