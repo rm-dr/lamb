@@ -1,10 +1,20 @@
 from prompt_toolkit import PromptSession
+from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit import print_formatted_text as printf
+
+import enum
 
 import lamb.commands as commands
 from lamb.parser import LambdaParser
 import lamb.tokens as tokens
 import lamb.utils as utils
-import lamb.runstatus as rs
+
+
+class StopReason(enum.Enum):
+	BETA_NORMAL		= ("class:text", "β-normal form")
+	LOOP_DETECTED	= ("class:warn", "loop detected")
+	MAX_EXCEEDED	= ("class:err", "too many reductions")
+	INTERRUPT		= ("class:warn", "user interrupt")
 
 
 class Runner:
@@ -24,6 +34,7 @@ class Runner:
 
 		# Maximum amount of reductions.
 		# If None, no maximum is enforced.
+		# Must be at least 1.
 		self.reduction_limit: int | None = 1_000_000
 
 		# Ensure bound variables are unique.
@@ -34,8 +45,16 @@ class Runner:
 	def prompt(self):
 		return self.prompt_session.prompt(message = self.prompt_message)
 
+	def parse(self, line):
+		e = self.parser.parse_line(line)
+		# Give the elements of this expression access to the runner.
+		# Runner must be set BEFORE variables are bound.
+		e.set_runner(self)
+		e.bind_variables()
+		return e
 
-	def reduce_expression(self, expr: tokens.LambdaToken) -> rs.ReduceStatus:
+
+	def reduce_expression(self, expr: tokens.LambdaToken) -> None:
 
 		# Reduction Counter.
 		# We also count macro (and church) expansions,
@@ -43,7 +62,7 @@ class Runner:
 		i = 0
 		macro_expansions = 0
 
-
+		stop_reason = StopReason.MAX_EXCEEDED
 		while (self.reduction_limit is None) or (i < self.reduction_limit):
 			r = expr.reduce()
 			expr = r.output
@@ -54,11 +73,8 @@ class Runner:
 			# If we can't reduce this expression anymore,
 			# it's in beta-normal form.
 			if not r.was_reduced:
-				return rs.ReduceStatus(
-					reduction_count = i - macro_expansions,
-					stop_reason = rs.StopReason.BETA_NORMAL,
-					result = r.output
-				)
+				stop_reason = StopReason.BETA_NORMAL
+				break
 
 			# Count reductions
 			#i += 1
@@ -70,43 +86,47 @@ class Runner:
 			else:
 				i += 1
 
-		return rs.ReduceStatus(
-			reduction_count = i, # - macro_expansions,
-			stop_reason = rs.StopReason.MAX_EXCEEDED,
-			result = r.output # type: ignore
-		)
+		out_str = str(r.output) # type: ignore
 
+		printf(FormattedText([
+			("class:result_header", f"\nExit reason: "),
+			stop_reason.value,
+
+			("class:result_header", f"\nReduction count: "),
+			("class:text", str(i)),
+
+
+			("class:result_header", "\n\n    => "),
+			("class:text", out_str),
+		]), style = utils.style)
+
+	def save_macro(self, macro: tokens.macro_expression, *, silent = False) -> None:
+		was_rewritten = macro.label in self.macro_table
+		self.macro_table[macro.label] = macro.expr
+
+		if not silent:
+			printf(FormattedText([
+				("class:text", "Set "),
+				("class:syn_macro", macro.label),
+				("class:text", " to "),
+				("class:text", str(macro.expr))
+			]), style = utils.style)
 
 	# Apply a list of definitions
-	def run(self, line: str, *, macro_only = False) -> rs.RunStatus:
-		e = self.parser.parse_line(line)
-		# Give the elements of this expression access to the runner.
-		# Runner must be set BEFORE variables are bound.
-		e.set_runner(self)
-		e.bind_variables()
+	def run(self, line: str, *, silent = False) -> None:
+		e = self.parse(line)
 
 		# If this line is a macro definition, save the macro.
 		if isinstance(e, tokens.macro_expression):
-			was_rewritten = e.label in self.macro_table
-			self.macro_table[e.label] = e.exp
-
-			return rs.MacroStatus(
-				was_rewritten = was_rewritten,
-				macro_label = e.label,
-				macro_expr = e.exp
-			)
-
-		elif macro_only:
-			raise rs.NotAMacro()
+			self.save_macro(e, silent = silent)
 
 		# If this line is a command, do the command.
 		elif isinstance(e, tokens.command):
 			commands.run(e, self)
-			return rs.CommandStatus(cmd = e.name)
 
 		# If this line is a plain expression, reduce it.
 		elif isinstance(e, tokens.LambdaToken):
-			return self.reduce_expression(e)
+			self.reduce_expression(e)
 
 		# We shouldn't ever get here.
 		else:
@@ -115,4 +135,4 @@ class Runner:
 
 	def run_lines(self, lines: list[str]):
 		for l in lines:
-			self.run(l)
+			self.run(l, silent = True)

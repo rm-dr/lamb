@@ -3,30 +3,6 @@ from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit import print_formatted_text as printf
 from importlib.metadata import version
 
-import lamb.tokens as tokens
-
-
-def autochurch(runner, num):
-	"""
-	Makes a church numeral from an integer.
-	"""
-
-	f = tokens.bound_variable("f", runner = runner)
-	a = tokens.bound_variable("a", runner = runner)
-
-	chain = a
-
-	for i in range(num):
-		chain = tokens.lambda_apply(f, chain)
-
-	return tokens.lambda_func(
-		f,
-		tokens.lambda_func(
-			a,
-			chain
-		)
-	)
-
 
 style = Style.from_dict({ # type: ignore
 	# Basic formatting

@@ -75,13 +75,27 @@ class church_num(LambdaToken):
 		return f"<{self.val}>"
 	def __str__(self):
 		return f"{self.val}"
+
+	def to_church(self):
+		"""
+		Return this number as an expanded church numeral.
+		"""
+		f = bound_variable("f", runner = self.runner)
+		a = bound_variable("a", runner = self.runner)
+		chain = a
+
+		for i in range(self.val):
+			chain = lambda_apply(f, chain)
+
+		return lambda_func(
+			f,
+			lambda_func(a, chain)
+		)
+
 	def reduce(self, *, force_substitute = False) -> ReductionStatus:
 		if force_substitute: # Only expand macros if we NEED to
 			return ReductionStatus(
-				output = utils.autochurch(
-					self.runner,
-					self.val
-				),
+				output = self.to_church(),
 				was_reduced = True,
 				reduction_type = ReductionType.AUTOCHURCH
 			)
@@ -214,19 +228,19 @@ class macro_expression:
 		)
 
 	def set_runner(self, runner):
-		self.exp.set_runner(runner)
+		self.expr.set_runner(runner)
 	def bind_variables(self):
-		self.exp.bind_variables()
+		self.expr.bind_variables()
 
-	def __init__(self, label: str, exp: LambdaToken):
+	def __init__(self, label: str, expr: LambdaToken):
 		self.label = label
-		self.exp = exp
+		self.expr = expr
 
 	def __repr__(self):
-		return f"<{self.label} := {self.exp!r}>"
+		return f"<{self.label} := {self.expr!r}>"
 
 	def __str__(self):
-		return f"{self.label} := {self.exp}"
+		return f"{self.label} := {self.expr}"
 
 
 class bound_variable(LambdaToken):

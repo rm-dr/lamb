@@ -6,9 +6,9 @@ from prompt_toolkit.shortcuts import clear as clear_screen
 import os.path
 
 from pyparsing import exceptions as ppx
-import lamb.runstatus as rs
-import lamb.utils as utils
 
+import lamb.tokens
+import lamb.utils
 
 
 commands = {}
@@ -26,7 +26,7 @@ def run(command, runner) -> None:
 			FormattedText([
 				("class:warn", f"Unknown command \"{command.name}\"")
 			]),
-			style = utils.style
+			style = lamb.utils.style
 		)
 	else:
 		commands[command.name](command, runner)
@@ -39,7 +39,7 @@ def save(command, runner) -> None:
 			HTML(
 				"<err>Command <cmd_code>:save</cmd_code> takes exactly one argument.</err>"
 			),
-			style = utils.style
+			style = lamb.utils.style
 		)
 		return
 
@@ -57,7 +57,7 @@ def save(command, runner) -> None:
 				HTML(
 					"<err>Cancelled.</err>"
 				),
-				style = utils.style
+				style = lamb.utils.style
 			)
 			return
 
@@ -70,7 +70,7 @@ def save(command, runner) -> None:
 		HTML(
 			f"Wrote {len(runner.macro_table)} macros to <cmd_code>{target}</cmd_code>"
 		),
-		style = utils.style
+		style = lamb.utils.style
 	)
 
 
@@ -81,7 +81,7 @@ def load(command, runner):
 			HTML(
 				"<err>Command <cmd_code>:load</cmd_code> takes exactly one argument.</err>"
 			),
-			style = utils.style
+			style = lamb.utils.style
 		)
 		return
 
@@ -91,7 +91,7 @@ def load(command, runner):
 			HTML(
 				f"<err>File {target} doesn't exist.</err>"
 			),
-			style = utils.style
+			style = lamb.utils.style
 		)
 		return
 
@@ -101,7 +101,7 @@ def load(command, runner):
 	for i in range(len(lines)):
 		l = lines[i]
 		try:
-			x = runner.run(l, macro_only = True)
+			x = runner.parse(l)
 		except ppx.ParseException as e:
 			printf(
 				FormattedText([
@@ -110,25 +110,30 @@ def load(command, runner):
 					("class:err", l[e.loc]),
 					("class:cmd_code", l[e.loc+1:])
 				]),
-				style = utils.style
+				style = lamb.utils.style
 			)
-		except rs.NotAMacro:
+			return
+
+		if not isinstance(x, lamb.tokens.macro_expression):
 			printf(
 				FormattedText([
 					("class:warn", f"Skipping line {i+1:02}: "),
 					("class:cmd_code", l),
 					("class:warn", f" is not a macro definition.")
 				]),
-				style = utils.style
+				style = lamb.utils.style
 			)
-		else:
-			printf(
-				FormattedText([
-					("class:ok", f"Loaded {x.macro_label}: "),
-					("class:cmd_code", str(x.macro_expr))
-				]),
-				style = utils.style
-			)
+			return
+
+		runner.save_macro(x, silent = True)
+
+		printf(
+			FormattedText([
+				("class:ok", f"Loaded {x.label}: "),
+				("class:cmd_code", str(x.expr))
+			]),
+			style = lamb.utils.style
+		)
 
 
 
@@ -139,7 +144,7 @@ def mdel(command, runner) -> None:
 			HTML(
 				"<err>Command <cmd_code>:mdel</cmd_code> takes exactly one argument.</err>"
 			),
-			style = utils.style
+			style = lamb.utils.style
 		)
 		return
 
@@ -149,7 +154,7 @@ def mdel(command, runner) -> None:
 			HTML(
 				f"<warn>Macro \"{target}\" is not defined</warn>"
 			),
-			style = utils.style
+			style = lamb.utils.style
 		)
 		return
 
@@ -166,13 +171,13 @@ def macros(command, runner) -> None:
 			("class:cmd_text", f"\t{name} \t {exp}\n")
 			for name, exp in runner.macro_table.items()
 		]),
-		style = utils.style
+		style = lamb.utils.style
 	)
 
 @lamb_command(help_text = "Clear the screen")
 def clear(command, runner) -> None:
 	clear_screen()
-	utils.show_greeting()
+	lamb.utils.show_greeting()
 
 
 @lamb_command(help_text = "Print this help")
@@ -196,5 +201,5 @@ def help(command, runner) -> None:
 			]) +
 			"</cmd_text>"
 		),
-		style = utils.style
+		style = lamb.utils.style
 	)

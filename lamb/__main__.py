@@ -9,7 +9,6 @@ from prompt_toolkit.lexers import Lexer
 from pyparsing import exceptions as ppx
 
 import lamb.runner as runner
-import lamb.runstatus as rs
 import lamb.tokens as tokens
 import lamb.utils as utils
 
@@ -99,32 +98,5 @@ while True:
 			("class:err", f"{e.msg}\n")
 		]), style = utils.style)
 		continue
-
-	# If this line defined a macro, print nothing.
-	if isinstance(x, rs.MacroStatus):
-		printf(FormattedText([
-			("class:text", "Set "),
-			("class:syn_macro", x.macro_label),
-			("class:text", " to "),
-			("class:text", str(x.macro_expr))
-		]), style = utils.style)
-
-
-	if isinstance(x, rs.CommandStatus):
-		pass
-
-	# If this line was an expression, print reduction status
-	elif isinstance(x, rs.ReduceStatus):
-		printf(FormattedText([
-			("class:result_header", f"\nExit reason: "),
-			x.stop_reason.value,
-
-			("class:result_header", f"\nReduction count: "),
-			("class:text", str(x.reduction_count)),
-
-
-			("class:result_header", "\n\n    => "),
-			("class:text", str(x.result)),
-		]), style = utils.style)
 
 	printf("")
