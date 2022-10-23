@@ -1,4 +1,5 @@
 import enum
+import lamb.utils as utils
 
 class ReductionError(Exception):
 	"""
@@ -13,6 +14,7 @@ class ReductionType(enum.Enum):
 	MACRO_EXPAND	= enum.auto()
 	MACRO_TO_FREE	= enum.auto()
 	FUNCTION_APPLY	= enum.auto()
+	AUTOCHURCH		= enum.auto()
 
 
 class ReductionStatus:
@@ -56,6 +58,39 @@ class LambdaToken:
 			was_reduced = False,
 			output = self
 		)
+
+class church_num(LambdaToken):
+	"""
+	Represents a Church numeral.
+	"""
+	@staticmethod
+	def from_parse(result):
+		return church_num(
+			int(result[0]),
+		)
+
+	def __init__(self, val):
+		self.val = val
+	def __repr__(self):
+		return f"<{self.val}>"
+	def __str__(self):
+		return f"{self.val}"
+	def reduce(self, *, force_substitute = False) -> ReductionStatus:
+		if force_substitute: # Only expand macros if we NEED to
+			return ReductionStatus(
+				output = utils.autochurch(
+					self.runner,
+					self.val
+				),
+				was_reduced = True,
+				reduction_type = ReductionType.AUTOCHURCH
+			)
+		else: # Otherwise, do nothing.
+			return ReductionStatus(
+				output = self,
+				was_reduced = False
+			)
+
 
 class free_variable(LambdaToken):
 	"""
@@ -148,7 +183,6 @@ class macro(LambdaToken):
 			else: # Otherwise, do nothing.
 				return ReductionStatus(
 					output = self,
-					reduction_type = ReductionType.MACRO_EXPAND,
 					was_reduced = False
 				)
 
@@ -213,6 +247,9 @@ class bound_variable(LambdaToken):
 
 	def __repr__(self):
 		return f"<{self.original_name} {self.identifier}>"
+
+	def __str__(self):
+		return self.original_name
 
 class lambda_func(LambdaToken):
 	"""
@@ -336,12 +373,6 @@ class lambda_func(LambdaToken):
 	def reduce(self) -> ReductionStatus:
 
 		r = self.output.reduce()
-
-		# If a macro becomes a free variable,
-		# reduce twice.
-		if r.reduction_type == ReductionType.MACRO_TO_FREE:
-			self.output = r.output
-			return self.reduce()
 
 		return ReductionStatus(
 			was_reduced = r.was_reduced,
@@ -512,7 +543,7 @@ class lambda_apply(LambdaToken):
 		# Otherwise, try to reduce self.fn.
 		# If that is impossible, try to reduce self.arg.
 		else:
-			if isinstance(self.fn, macro):
+			if isinstance(self.fn, macro) or isinstance(self.fn, church_num):
 				# Macros must be reduced before we apply them as functions.
 				# This is the only place we force substitution.
 				r = self.fn.reduce(
@@ -520,12 +551,6 @@ class lambda_apply(LambdaToken):
 				)
 			else:
 				r = self.fn.reduce()
-
-			# If a macro becomes a free variable,
-			# reduce twice.
-			if r.reduction_type == ReductionType.MACRO_TO_FREE:
-				self.fn = r.output
-				return self.reduce()
 
 			if r.was_reduced:
 				return ReductionStatus(
@@ -539,10 +564,6 @@ class lambda_apply(LambdaToken):
 
 			else:
 				r = self.arg.reduce()
-
-				if r.reduction_type == ReductionType.MACRO_TO_FREE:
-					self.arg = r.output
-					return self.reduce()
 
 				return ReductionStatus(
 					was_reduced = r.was_reduced,

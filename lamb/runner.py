@@ -15,7 +15,7 @@ class Runner:
 		self.parser = LambdaParser(
 			action_command		= tokens.command.from_parse,
 			action_macro_def	= tokens.macro_expression.from_parse,
-			action_church		= utils.autochurch(self),
+			action_church		= tokens.church_num.from_parse,
 			action_func			= tokens.lambda_func.from_parse,
 			action_bound		= tokens.macro.from_parse,
 			action_macro		= tokens.macro.from_parse,
@@ -24,7 +24,7 @@ class Runner:
 
 		# Maximum amount of reductions.
 		# If None, no maximum is enforced.
-		self.reduction_limit: int | None = 300
+		self.reduction_limit: int | None = 1_000_000
 
 		# Ensure bound variables are unique.
 		# This is automatically incremented whenever we make
@@ -38,15 +38,18 @@ class Runner:
 	def reduce_expression(self, expr: tokens.LambdaToken) -> rs.ReduceStatus:
 
 		# Reduction Counter.
-		# We also count macro expansions,
+		# We also count macro (and church) expansions,
 		# and subtract those from the final count.
 		i = 0
 		macro_expansions = 0
 
+
 		while (self.reduction_limit is None) or (i < self.reduction_limit):
-			print(repr(expr))
 			r = expr.reduce()
 			expr = r.output
+
+			#print(expr)
+			#self.prompt()
 
 			# If we can't reduce this expression anymore,
 			# it's in beta-normal form.
@@ -58,12 +61,17 @@ class Runner:
 				)
 
 			# Count reductions
-			i += 1
-			if r.reduction_type == tokens.ReductionType.MACRO_EXPAND:
+			#i += 1
+			if (
+					r.reduction_type == tokens.ReductionType.MACRO_EXPAND or
+					r.reduction_type == tokens.ReductionType.AUTOCHURCH
+				):
 				macro_expansions += 1
+			else:
+				i += 1
 
 		return rs.ReduceStatus(
-			reduction_count = i - macro_expansions,
+			reduction_count = i, # - macro_expansions,
 			stop_reason = rs.StopReason.MAX_EXCEEDED,
 			result = r.output # type: ignore
 		)
