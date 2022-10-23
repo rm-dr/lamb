@@ -47,7 +47,7 @@ class LambdaParser:
 		)
 
 		self.pp_expr <<= (
-			self.pp_church ^
+			#self.pp_church ^
 			self.pp_lambda_fun ^
 			self.pp_name ^
 			(self.lp + self.pp_expr + self.rp) ^
@@ -60,31 +60,31 @@ class LambdaParser:
 		self.pp_all = (
 			self.pp_expr ^
 			self.pp_macro_def ^
-			self.pp_command ^
+			#self.pp_command ^
 			self.pp_call
 		)
 
 	def __init__(
 			self,
 			*,
-			action_command,
-			action_macro_def,
-			action_church,
+			#action_command,
+			#action_macro_def,
+			#action_church,
 			action_func,
 			action_bound,
 			action_macro,
-			action_apply
+			action_call
 		):
 
 		self.make_parser()
 
-		self.pp_command.set_parse_action(action_command)
-		self.pp_macro_def.set_parse_action(action_macro_def)
-		self.pp_church.set_parse_action(action_church)
+		#self.pp_command.set_parse_action(action_command)
+		#self.pp_macro_def.set_parse_action(action_macro_def)
+		#self.pp_church.set_parse_action(action_church)
 		self.pp_lambda_fun.set_parse_action(action_func)
 		self.pp_macro.set_parse_action(action_macro)
 		self.pp_bound.set_parse_action(action_bound)
-		self.pp_call.set_parse_action(action_apply)
+		self.pp_call.set_parse_action(action_call)
 
 	def parse_line(self, line: str):
 		return self.pp_all.parse_string(

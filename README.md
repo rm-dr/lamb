@@ -20,6 +20,7 @@
  - Smart alignment in all printouts
  - Full-reduce option
  - Set reduction limit command
+ - Runtime limit
 
 ## Mention in Docs
  - lambda functions only work with single-letter arguments
