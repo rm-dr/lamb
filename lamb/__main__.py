@@ -57,6 +57,11 @@ r.run_lines([
 	"Y = λf.( (λx.(f (x x))) (λx.(f (x x))) )",
 	"PAIR = λabi.( i a b )",
 	"S = λnfa.(f (n f a))",
+	"Z = λn.n (λa.F) T",
+	"MULT = λnmf.n (m f)",
+	"H = λp.((PAIR (p F)) (S (p F)))",
+	"D = λn.n H (PAIR 0 0) T",
+	"FAC = λyn.(Z n)(1)(MULT n (y (D n)))"
 ])
 
 
