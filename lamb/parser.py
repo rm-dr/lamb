@@ -47,7 +47,7 @@ class LambdaParser:
 		)
 
 		self.pp_expr <<= (
-			#self.pp_church ^
+			self.pp_church ^
 			self.pp_lambda_fun ^
 			self.pp_name ^
 			(self.lp + self.pp_expr + self.rp) ^
