@@ -48,6 +48,40 @@ r = runner.Runner(
 
 macro_table = {}
 
+class TreeWalker:
+	def __init__(self, expr):
+		self.expr = expr
+		self.ptr = expr
+		self.from_side = Direction.UP
+
+	def __next__(self):
+		if self.ptr is self.expr.parent:
+			raise StopIteration
+
+		out = self.ptr
+		out_side = self.from_side
+		if isinstance(self.ptr, EndNode):
+			self.from_side, self.ptr = self.ptr.go_up()
+
+		elif isinstance(self.ptr, Func):
+			if self.from_side == Direction.UP:
+				self.from_side, self.ptr = self.ptr.go_left()
+			elif self.from_side == Direction.LEFT:
+				self.from_side, self.ptr = self.ptr.go_up()
+
+		elif isinstance(self.ptr, Call):
+			if self.from_side == Direction.UP:
+				self.from_side, self.ptr = self.ptr.go_left()
+			elif self.from_side == Direction.LEFT:
+				self.from_side, self.ptr = self.ptr.go_right()
+			elif self.from_side == Direction.RIGHT:
+				self.from_side, self.ptr = self.ptr.go_up()
+
+		else:
+			raise TypeError(f"I don't know how to iterate a {type(self.ptr)}")
+
+		return out_side, out
+
 class Direction(enum.Enum):
 	UP		= enum.auto()
 	LEFT	= enum.auto()
@@ -73,8 +107,33 @@ class Node:
 		self.parent_side: Direction | None = None
 
 		# Left and right nodes, None if empty
-		self.left: Node | None = None
-		self.right: Node | None = None
+		self._left: Node | None = None
+		self._right: Node | None = None
+
+	def __iter__(self):
+		return TreeWalker(self)
+
+	@property
+	def left(self):
+		return self._left
+
+	@left.setter
+	def left(self, node):
+		if node is not None:
+			node.set_parent(self, Direction.LEFT)
+		self._left = node
+
+	@property
+	def right(self):
+		return self._right
+
+	@right.setter
+	def right(self, node):
+		if node is not None:
+			node.set_parent(self, Direction.RIGHT)
+		self._right = node
+
+
 
 	def set_parent(self, parent, side):
 		if (parent is not None) and (side is None):
@@ -83,16 +142,17 @@ class Node:
 			raise Exception("If a node has no parent, it cannot have a direction.")
 		self.parent = parent
 		self.parent_side = side
+		return self
 
 	def go_left(self):
-		if self.left is None:
+		if self._left is None:
 			raise Exception("Can't go left when left is None")
-		return Direction.UP, self.left
+		return Direction.UP, self._left
 
 	def go_right(self):
-		if self.right is None:
+		if self._right is None:
 			raise Exception("Can't go right when right is None")
-		return Direction.UP, self.right
+		return Direction.UP, self._right
 
 	def go_up(self):
 		return self.parent_side, self.parent
@@ -172,7 +232,7 @@ class Church(ExpandableEndNode):
 		chain = a
 
 		for i in range(self.value):
-			chain = Call(f, chain)
+			chain = Call(clone(f), clone(chain))
 
 		return Func(
 			f,
@@ -316,18 +376,12 @@ p = lamb.parser.LambdaParser(
 def clone_one(ptr, out):
 	if ptr.parent_side == Direction.LEFT:
 		out.left = ptr.clone()
-		out.left.set_parent(out, Direction.LEFT)
 	else:
 		out.right = ptr.clone()
-		out.right.set_parent(out, Direction.RIGHT)
 
 def clone(expr: Node):
 	if not isinstance(expr, Node):
 		raise TypeError(f"I don't know what to do with a {type(expr)}")
-
-	# Disconnect parent while cloning
-	old_parent = expr.parent
-	expr.parent = None
 
 	out = expr.clone()
 	out_ptr = out # Stays one step behind ptr, in the new tree.
@@ -337,7 +391,12 @@ def clone(expr: Node):
 	if isinstance(expr, EndNode):
 		return out
 
+	print("cloning", expr)
+
 	while True:
+		print("p", ptr)
+		print("o", out_ptr)
+		print("r", out)
 		if isinstance(ptr, EndNode):
 			from_side, ptr = ptr.go_up()
 			_, out_ptr = out_ptr.go_up()
@@ -361,57 +420,53 @@ def clone(expr: Node):
 			elif from_side == Direction.RIGHT:
 				from_side, ptr = ptr.go_up()
 				_, out_ptr = out_ptr.go_up()
-		if ptr is None:
+
+		if ptr is expr.parent:
 			break
 
-	expr.parent = old_parent
+		if out_ptr is None:
+			print("fail")
+			print(out_ptr)
+			print(out)
+			print(ptr, expr.parent)
+			print("<fail")
+			#return False
+
 	return out
 
 def print_expr(expr) -> str:
-
-	out = ""
-
 	# Type check
 	if isinstance(expr, MacroDef):
 		out = expr.label + " = "
 		expr = expr.expr
 	elif not isinstance(expr, Node):
 		raise TypeError(f"I don't know what to do with a {type(expr)}")
+	else:
+		out = ""
 
-	ptr = expr
-	from_side = Direction.UP
+	for s, n in expr:
 
-	while True:
-		print(ptr)
-		if isinstance(ptr, EndNode):
-			out += ptr.print_value()
-			from_side, ptr = ptr.go_up()
+		print(out)
+		if isinstance(n, EndNode):
+			out += n.print_value()
 
-		elif isinstance(ptr, Func):
-			if from_side == Direction.UP:
-				if isinstance(ptr.parent, Func):
-					out += ptr.input.name
+		elif isinstance(n, Func):
+			if s == Direction.UP:
+				if isinstance(n.parent, Func):
+					out += n.input.name
 				else:
-					out += "λ" + ptr.input.name
-				if not isinstance(ptr.left, Func):
+					out += "λ" + n.input.name
+				if not isinstance(n.left, Func):
 					out += "."
-				from_side, ptr = ptr.go_left()
-			elif from_side == Direction.LEFT:
-				from_side, ptr = ptr.go_up()
 
-		elif isinstance(ptr, Call):
-			if from_side == Direction.UP:
+		elif isinstance(n, Call):
+			if s == Direction.UP:
 				out += "("
-				from_side, ptr = ptr.go_left()
-			elif from_side == Direction.LEFT:
+			elif s == Direction.LEFT:
 				out += " "
-				from_side, ptr = ptr.go_right()
-			elif from_side == Direction.RIGHT:
+			elif s == Direction.RIGHT:
 				out += ")"
-				from_side, ptr = ptr.go_up()
 
-		if ptr is None:
-			break
 	return out
 
 def bind_variables(expr) -> None:
@@ -422,118 +477,51 @@ def bind_variables(expr) -> None:
 	elif not isinstance(expr, Node):
 		raise TypeError(f"I don't know what to do with a {type(expr)}")
 
-	ptr = expr
-	from_side = Direction.UP
 	bound_variables = {}
 
-	while True:
-		if isinstance(ptr, Func):
-			if from_side == Direction.UP:
+	for s, n in expr:
+		if isinstance(n, Func):
+			if s == Direction.UP:
 				# Add this function's input to the table of bound variables.
 				# If it is already there, raise an error.
-				if (ptr.input.name in bound_variables):
-					raise ReductionError(f"Bound variable name conflict: \"{ptr.input.name}\"")
+				if (n.input.name in bound_variables):
+					raise ReductionError(f"Bound variable name conflict: \"{n.input.name}\"")
 				else:
-					bound_variables[ptr.input.name] = Bound(ptr.input.name)
-					ptr.input = bound_variables[ptr.input.name]
+					bound_variables[n.input.name] = Bound(n.input.name)
+					n.input = bound_variables[n.input.name]
 
 				# If output is a macro, swap it with a bound variable.
-				if isinstance(ptr.left, Macro):
-					if ptr.left.name in bound_variables:
-						ptr.left = bound_variables[ptr.left.name].clone()
-						ptr.left.set_parent(ptr, Direction.LEFT)
+				if isinstance(n.left, Macro):
+					if n.left.name in bound_variables:
+						n.left = clone(bound_variables[n.left.name])
 
-				# If we can't move down the tree, move up.
-				if isinstance(ptr.left, EndNode):
-					del bound_variables[ptr.input.name]
-					from_side, ptr = ptr.go_up()
-				else:
-					from_side, ptr = ptr.go_left()
+			elif s == Direction.LEFT:
+				del bound_variables[n.input.name]
 
-			elif from_side == Direction.LEFT:
-				del bound_variables[ptr.input.name]
-				from_side, ptr = ptr.go_up()
-
-		elif isinstance(ptr, Call):
-			if from_side == Direction.UP:
+		elif isinstance(n, Call):
+			if s == Direction.UP:
 				# Bind macros
-				if isinstance(ptr.left, Macro):
-					if ptr.left.name in bound_variables:
-						ptr.left = bound_variables[ptr.left.name].clone()
-						ptr.left.set_parent(ptr, Direction.LEFT)
-				if isinstance(ptr.right, Macro):
-					if ptr.right.name in bound_variables:
-						ptr.right = bound_variables[ptr.right.name].clone()
-						ptr.right.set_parent(ptr, Direction.RIGHT)
-
-				if not isinstance(ptr.left, EndNode):
-					from_side, ptr = ptr.go_left()
-				elif not isinstance(ptr.right, EndNode):
-					from_side, ptr = ptr.go_right()
-				else:
-					from_side, ptr = ptr.go_up()
-
-			elif from_side == Direction.LEFT:
-				if not isinstance(ptr.right, EndNode):
-					from_side, ptr = ptr.go_right()
-				else:
-					from_side, ptr = ptr.go_up()
-
-			elif from_side == Direction.RIGHT:
-				from_side, ptr = ptr.go_up()
-
-		if ptr is None:
-			break
+				if isinstance(n.left, Macro):
+					if n.left.name in bound_variables:
+						n.left = clone(bound_variables[n.left.name])
+				if isinstance(n.right, Macro):
+					if n.right.name in bound_variables:
+						n.right = clone(bound_variables[n.right.name])
 
 
 # Apply a function.
 # Returns the function's output.
 def call_func(fn: Func, arg: Node):
-	ptr = fn
-
-	# Temporarily disconnect this function's
-	# parent to keep our pointer inside this
-	# subtree.
-	old_parent = fn.parent
-	fn.parent = None
-
-	from_side = Direction.UP
-
-	while True:
-		if isinstance(ptr, Bound):
-			if ptr == fn.input:
-				if ptr.parent is None:
+	for s, n in fn:
+		if isinstance(n, Bound):
+			if n == fn.input:
+				if n.parent is None:
 					raise Exception("Tried to substitute a None bound variable.")
 
-				if ptr.parent_side == Direction.LEFT:
-					ptr.parent.left = clone(arg)
-					ptr.parent.left.set_parent(ptr, Direction.LEFT)
+				if n.parent_side == Direction.LEFT:
+					n.parent.left = clone(arg)
 				else:
-					ptr.parent.right = clone(arg)
-					ptr.parent.right.set_parent(ptr, Direction.RIGHT)
-
-			from_side, ptr = ptr.go_up()
-
-		elif isinstance(ptr, Func):
-			if from_side == Direction.UP:
-				from_side, ptr = ptr.go_left()
-			elif from_side == Direction.LEFT:
-				from_side, ptr = ptr.go_up()
-
-		elif isinstance(ptr, Call):
-			if from_side == Direction.UP:
-				from_side, ptr = ptr.go_left()
-			elif from_side == Direction.LEFT:
-				from_side, ptr = ptr.go_right()
-			elif from_side == Direction.RIGHT:
-				from_side, ptr = ptr.go_up()
-		else:
-			from_side, ptr = ptr.go_up()
-
-		if ptr is None:
-			break
-
-	fn.parent = old_parent
+					n.parent.right = clone(arg)
 	return fn.left
 
 
@@ -543,48 +531,26 @@ def reduce(expr) -> tuple[bool, Node]:
 	if not isinstance(expr, Node):
 		raise TypeError(f"I can't reduce a {type(expr)}")
 
-	ptr = expr
-	from_side = Direction.UP
 	reduced = False
 
-	while True:
-		print("redu", ptr)
 
-		if isinstance(ptr, Call):
-			if from_side == Direction.UP:
-				if isinstance(ptr.left, Func):
-					if ptr.parent is None:
-						expr = call_func(ptr.left, ptr.right)
+	for s, n in expr:
+		if isinstance(n, Call):
+			if s == Direction.UP:
+				if isinstance(n.left, Func):
+					if n.parent is None:
+						expr = call_func(n.left, n.right)
 						expr.set_parent(None, None)
 					else:
-						ptr.parent.left = call_func(ptr.left, ptr.right)
-						ptr.parent.left.set_parent(ptr.parent, Direction.LEFT)
+						n.parent.left = call_func(n.left, n.right)
 					reduced = True
 					break
-				elif isinstance(ptr.left, ExpandableEndNode):
-					ptr.left = ptr.left.expand()
+				elif isinstance(n.left, ExpandableEndNode):
+					n.left = n.left.expand()
 					reduced = True
 					break
-				elif isinstance(ptr.left, Call):
-					from_side, ptr = ptr.go_left()
-				else:
-					from_side, ptr = ptr.go_right()
 
-			else:
-				from_side, ptr = ptr.go_up()
-
-		elif isinstance(ptr, Func):
-			if from_side == Direction.UP:
-				from_side, ptr = ptr.go_left()
-			else:
-				from_side, ptr = ptr.go_up()
-
-		elif isinstance(ptr, EndNode):
-			from_side, ptr = ptr.go_up()
-
-		if ptr is None:
-			break
-
+	print("r")
 	return reduced, expr
 
 
@@ -605,10 +571,11 @@ for l in [
 	"H = λp.((PAIR (p F)) (S (p F)))",
 	"D = λn.n H (PAIR 0 0) T",
 	"FAC = λyn.(Z n)(1)(MULT n (y (D n)))",
-	"S (λfa.f a)"
+	"3 NOT T"
 ]:
 	n = p.parse_line(l)
 	bind_variables(n)
+
 
 	if isinstance(n, MacroDef):
 		macro_table[n.label] = n.expr
@@ -616,7 +583,7 @@ for l in [
 	else:
 		for i in range(10):
 			r, n = reduce(n)
+			print(print_expr(n))
 			if not r:
 				break
-		print(print_expr(n))
 		#print(print_expr(clone(n)))
