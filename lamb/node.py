@@ -5,6 +5,24 @@ class Direction(enum.Enum):
 	LEFT	= enum.auto()
 	RIGHT	= enum.auto()
 
+class ReductionType(enum.Enum):
+	# Nothing happened. This implies that
+	# an expression cannot be reduced further.
+	NOTHING			= enum.auto()
+
+	# We replaced a macro with an expression.
+	MACRO_EXPAND	= enum.auto()
+
+	# We turned a church numeral into an expression
+	AUTOCHURCH		= enum.auto()
+
+	# We replaced a macro with a free variable.
+	MACRO_TO_FREE	= enum.auto()
+
+	# We applied a function.
+	# This is the only type of "formal" reduction step.
+	FUNCTION_APPLY	= enum.auto()
+
 class ReductionError(Exception):
 	"""
 	Raised when we encounter an error while reducing.
@@ -16,12 +34,26 @@ class ReductionError(Exception):
 
 
 class TreeWalker:
+	"""
+	An iterator that walks the "outline" of a tree
+	defined by a chain of nodes.
+
+	It returns a tuple: (out_side, out)
+
+	out is the node we moved to,
+	out_side is the direction we came to the node from.
+	"""
+
 	def __init__(self, expr):
 		self.expr = expr
 		self.ptr = expr
 		self.from_side = Direction.UP
 
 	def __next__(self):
+		# This could be implemented without checking the node type,
+		# but there's no reason to do that.
+		# Maybe later?
+
 		if self.ptr is self.expr.parent:
 			raise StopIteration
 
@@ -50,6 +82,10 @@ class TreeWalker:
 		return out_side, out
 
 class Node:
+	"""
+	Generic class for an element of an expression tree.
+	"""
+
 	def __init__(self):
 		# The node this one is connected to.
 		# None if this is the top objects.
@@ -67,6 +103,12 @@ class Node:
 		return TreeWalker(self)
 
 	def _set_parent(self, parent, side):
+		"""
+		Set this node's parent and parent side.
+		This method shouldn't be called explicitly unless
+		there's no other option. Use self.left and self.right instead.
+		"""
+
 		if (parent is not None) and (side is None):
 			raise Exception("If a node has a parent, it must have a direction.")
 		if (parent is None) and (side is not None):
@@ -97,6 +139,11 @@ class Node:
 
 
 	def set_side(self, side: Direction, node):
+		"""
+		A wrapper around Node.left and Node.right that
+		automatically selects a side.
+		"""
+
 		if side == Direction.LEFT:
 			self.left = node
 		elif side == Direction.RIGHT:
@@ -106,20 +153,47 @@ class Node:
 
 
 	def go_left(self):
+		"""
+		Go down the left branch of this node.
+		Returns a tuple (from_dir, node)
+
+		from_dir is the direction from which we came INTO the next node.
+		node is the node on the left of this one.
+		"""
+
 		if self._left is None:
 			raise Exception("Can't go left when left is None")
 		return Direction.UP, self._left
 
 	def go_right(self):
+		"""
+		Go down the right branch of this node.
+		Returns a tuple (from_dir, node)
+
+		from_dir is the direction from which we came INTO the next node.
+		node is the node on the right of this one.
+		"""
 		if self._right is None:
 			raise Exception("Can't go right when right is None")
 		return Direction.UP, self._right
 
 	def go_up(self):
+		"""
+		Go up th the parent of this node.
+		Returns a tuple (from_dir, node)
+
+		from_dir is the direction from which we came INTO the parent.
+		node is the node above of this one.
+		"""
 		return self.parent_side, self.parent
 
-	def clone(self):
-		raise NotImplementedError("Nodes MUST provide a `clone` method!")
+	def copy(self):
+		"""
+		Return a copy of this node.
+		parent, parent_side, left, and right should be left
+		as None, and will be filled later.
+		"""
+		raise NotImplementedError("Nodes MUST provide a `copy` method!")
 
 	def __str__(self) -> str:
 		return print_node(self)
@@ -135,7 +209,7 @@ class EndNode(Node):
 		raise NotImplementedError("EndNodes MUST provide a `print_value` method!")
 
 class ExpandableEndNode(EndNode):
-	def expand(self):
+	def expand(self) -> tuple[ReductionType, Node]:
 		raise NotImplementedError("ExpandableEndNodes MUST provide an `expand` method!")
 
 class FreeVar(EndNode):
@@ -148,7 +222,7 @@ class FreeVar(EndNode):
 	def print_value(self):
 		return f"{self.name}"
 
-	def clone(self):
+	def copy(self):
 		return FreeVar(self.name)
 
 class Macro(ExpandableEndNode):
@@ -168,14 +242,13 @@ class Macro(ExpandableEndNode):
 	def print_value(self):
 		return self.name
 
-	def expand(self, *, macro_table = {}):
+	def expand(self, *, macro_table = {}) -> tuple[ReductionType, Node]:
 		if self.name in macro_table:
-			return clone(macro_table[self.name])
+			return ReductionType.MACRO_EXPAND, clone(macro_table[self.name])
 		else:
-			f = FreeVar(self.name)
-			return f
+			return ReductionType.MACRO_TO_FREE, FreeVar(self.name)
 
-	def clone(self):
+	def copy(self):
 		return Macro(self.name)
 
 class Church(ExpandableEndNode):
@@ -195,7 +268,7 @@ class Church(ExpandableEndNode):
 	def print_value(self):
 		return str(self.value)
 
-	def expand(self):
+	def expand(self) -> tuple[ReductionType, Node]:
 		f = Bound("f")
 		a = Bound("a")
 		chain = a
@@ -203,12 +276,12 @@ class Church(ExpandableEndNode):
 		for i in range(self.value):
 			chain = Call(clone(f), clone(chain))
 
-		return Func(
-			f,
-			Func(a, chain)
+		return (
+			ReductionType.AUTOCHURCH,
+			Func(f, Func(a, chain))
 		)
 
-	def clone(self):
+	def copy(self):
 		return Church(self.value)
 
 bound_counter = 0
@@ -223,7 +296,7 @@ class Bound(EndNode):
 		else:
 			self.identifier = forced_id
 
-	def clone(self):
+	def copy(self):
 		return Bound(self.name, forced_id = self.identifier)
 
 	def __eq__(self, other):
@@ -260,7 +333,7 @@ class Func(Node):
 	def __repr__(self):
 		return f"<func {self.input!r} {self.left!r}>"
 
-	def clone(self):
+	def copy(self):
 		return Func(self.input, None) # type: ignore
 
 class Call(Node):
@@ -292,14 +365,13 @@ class Call(Node):
 	def __repr__(self):
 		return f"<call {self.left!r} {self.right!r}>"
 
-	def clone(self):
+	def copy(self):
 		return Call(None, None)  # type: ignore
-
 
 
 def print_node(node: Node) -> str:
 	if not isinstance(node, Node):
-		raise TypeError(f"I don't know what to do with a {type(node)}")
+		raise TypeError(f"I don't know how to print a {type(node)}")
 	else:
 		out = ""
 
@@ -330,7 +402,7 @@ def clone(node: Node):
 	if not isinstance(node, Node):
 		raise TypeError(f"I don't know what to do with a {type(node)}")
 
-	out = node.clone()
+	out = node.copy()
 	out_ptr = out # Stays one step behind ptr, in the new tree.
 	ptr = node
 	from_side = Direction.UP
@@ -347,7 +419,7 @@ def clone(node: Node):
 		elif isinstance(ptr, Func):
 			if from_side == Direction.UP:
 				from_side, ptr = ptr.go_left()
-				out_ptr.set_side(ptr.parent_side, ptr.clone())
+				out_ptr.set_side(ptr.parent_side, ptr.copy())
 				_, out_ptr = out_ptr.go_left()
 			elif from_side == Direction.LEFT:
 				from_side, ptr = ptr.go_up()
@@ -355,12 +427,11 @@ def clone(node: Node):
 		elif isinstance(ptr, Call):
 			if from_side == Direction.UP:
 				from_side, ptr = ptr.go_left()
-				out_ptr.set_side(ptr.parent_side, ptr.clone()
-)
+				out_ptr.set_side(ptr.parent_side, ptr.copy())
 				_, out_ptr = out_ptr.go_left()
 			elif from_side == Direction.LEFT:
 				from_side, ptr = ptr.go_right()
-				out_ptr.set_side(ptr.parent_side, ptr.clone())
+				out_ptr.set_side(ptr.parent_side, ptr.copy())
 				_, out_ptr = out_ptr.go_right()
 			elif from_side == Direction.RIGHT:
 				from_side, ptr = ptr.go_up()
@@ -371,7 +442,6 @@ def clone(node: Node):
 	return out
 
 def bind_variables(node: Node, *, ban_macro_name = None) -> None:
-
 	if not isinstance(node, Node):
 		raise TypeError(f"I don't know what to do with a {type(node)}")
 
@@ -432,31 +502,29 @@ def call_func(fn: Func, arg: Node):
 
 
 # Do a single reduction step
-def reduce(node: Node, *, macro_table = {}) -> tuple[bool, Node]:
-
+def reduce(node: Node, *, macro_table = {}) -> tuple[ReductionType, Node]:
 	if not isinstance(node, Node):
 		raise TypeError(f"I can't reduce a {type(node)}")
 
-	reduced = False
-
 	out = node
 	for s, n in out:
-		if isinstance(n, Call):
-			if s == Direction.UP:
-				if isinstance(n.left, Func):
-					if n.parent is None:
-						out = call_func(n.left, n.right)
-						out._set_parent(None, None)
-					else:
-						n.parent.left = call_func(n.left, n.right)
-					reduced = True
-					break
-				elif isinstance(n.left, ExpandableEndNode):
-					if isinstance(n.left, Macro):
-						n.left = n.left.expand(macro_table = macro_table)
-					else:
-						n.left = n.left.expand()
-					reduced = True
-					break
+		if isinstance(n, Call) and (s == Direction.UP):
+			if isinstance(n.left, Func):
+				if n.parent is None:
+					out = call_func(n.left, n.right)
+					out._set_parent(None, None)
+				else:
+					n.parent.left = call_func(n.left, n.right)
 
-	return reduced, out
+				return ReductionType.FUNCTION_APPLY, out
+
+			elif isinstance(n.left, ExpandableEndNode):
+				if isinstance(n.left, Macro):
+					r, n.left = n.left.expand(
+						macro_table = macro_table
+					)
+				else:
+					r, n.left = n.left.expand()
+				return r, out
+
+	return ReductionType.NOTHING, out

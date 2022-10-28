@@ -4,7 +4,6 @@ from prompt_toolkit import print_formatted_text as printf
 from prompt_toolkit.shortcuts import clear as clear_screen
 
 import os.path
-
 from pyparsing import exceptions as ppx
 
 import lamb
@@ -12,30 +11,32 @@ import lamb
 commands = {}
 help_texts = {}
 
-def lamb_command(*, help_text: str):
+def lamb_command(
+		*,
+		command_name: str | None = None,
+		help_text: str
+	):
+	"""
+	A decorator that allows us to easily make commands
+	"""
+
 	def inner(func):
-		commands[func.__name__] = func
-		help_texts[func.__name__] = help_text
+		name = func.__name__ if command_name is None else command_name
+
+		commands[name] = func
+		help_texts[name] = help_text
 	return inner
 
-def run(command, runner) -> None:
-	if command.name not in commands:
-		printf(
-			FormattedText([
-				("class:warn", f"Unknown command \"{command.name}\"")
-			]),
-			style = lamb.utils.style
-		)
-	else:
-		commands[command.name](command, runner)
 
-
-@lamb_command(help_text = "Save macros to a file")
-def save(command, runner) -> None:
+@lamb_command(
+	command_name = "save",
+	help_text = "Save macros to a file"
+)
+def cmd_save(command, runner) -> None:
 	if len(command.args) != 1:
 		printf(
 			HTML(
-				"<err>Command <cmd_code>:save</cmd_code> takes exactly one argument.</err>"
+				"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
 			),
 			style = lamb.utils.style
 		)
@@ -72,12 +73,15 @@ def save(command, runner) -> None:
 	)
 
 
-@lamb_command(help_text = "Load macros from a file")
-def load(command, runner):
+@lamb_command(
+	command_name = "load",
+	help_text = "Load macros from a file"
+)
+def cmd_load(command, runner):
 	if len(command.args) != 1:
 		printf(
 			HTML(
-				"<err>Command <cmd_code>:load</cmd_code> takes exactly one argument.</err>"
+				"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
 			),
 			style = lamb.utils.style
 		)
@@ -134,13 +138,14 @@ def load(command, runner):
 		)
 
 
-
-@lamb_command(help_text = "Delete a macro")
+@lamb_command(
+	help_text = "Delete a macro"
+)
 def mdel(command, runner) -> None:
 	if len(command.args) != 1:
 		printf(
 			HTML(
-				"<err>Command <cmd_code>:mdel</cmd_code> takes exactly one argument.</err>"
+				"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
 			),
 			style = lamb.utils.style
 		)
@@ -159,8 +164,9 @@ def mdel(command, runner) -> None:
 	del runner.macro_table[target]
 
 
-
-@lamb_command(help_text = "Show macros")
+@lamb_command(
+	help_text = "Show macros"
+)
 def macros(command, runner) -> None:
 	printf(FormattedText([
 			("class:cmd_h", "\nDefined Macros:\n"),
@@ -172,13 +178,17 @@ def macros(command, runner) -> None:
 		style = lamb.utils.style
 	)
 
-@lamb_command(help_text = "Clear the screen")
+@lamb_command(
+	help_text = "Clear the screen"
+)
 def clear(command, runner) -> None:
 	clear_screen()
 	lamb.utils.show_greeting()
 
 
-@lamb_command(help_text = "Print this help")
+@lamb_command(
+	help_text = "Print this help"
+)
 def help(command, runner) -> None:
 	printf(
 		HTML(

@@ -103,39 +103,32 @@ class Runner:
 		while (self.reduction_limit is None) or (i < self.reduction_limit):
 
 			try:
-				w, r = lamb.node.reduce(
+				red_type, new_node = lamb.node.reduce(
 					node,
 					macro_table = self.macro_table
 				)
 			except RecursionError:
 				stop_reason = StopReason.RECURSION
 				break
-			node = r
-
-			#print(expr)
-			#self.prompt()
+			node = new_node
 
 			# If we can't reduce this expression anymore,
 			# it's in beta-normal form.
-			if not w:
+			if red_type == lamb.node.ReductionType.NOTHING:
 				stop_reason = StopReason.BETA_NORMAL
 				break
 
 			# Count reductions
-			#i += 1
-			#if (
-			#		r.reduction_type == tokens.ReductionType.MACRO_EXPAND or
-			#		r.reduction_type == tokens.ReductionType.AUTOCHURCH
-			#	):
-			#	macro_expansions += 1
-			#else:
 			i += 1
+			if red_type == lamb.node.ReductionType.FUNCTION_APPLY:
+				macro_expansions += 1
+
 
 		if (
-			stop_reason == StopReason.BETA_NORMAL or
-			stop_reason == StopReason.LOOP_DETECTED
+				stop_reason == StopReason.BETA_NORMAL or
+				stop_reason == StopReason.LOOP_DETECTED
 			):
-			out_str = str(r) # type: ignore
+			out_str = str(new_node) # type: ignore
 
 			printf(FormattedText([
 				("class:result_header", f"\nExit reason: "),
@@ -195,7 +188,15 @@ class Runner:
 
 		# If this line is a command, do the command.
 		elif isinstance(e, Command):
-			lamb.commands.run(e, self)
+			if e.name not in lamb.commands.commands:
+				printf(
+					FormattedText([
+						("class:warn", f"Unknown command \"{e.name}\"")
+					]),
+					style = lamb.utils.style
+				)
+			else:
+				lamb.commands.commands[e.name](e, self)
 
 		# If this line is a plain expression, reduce it.
 		elif isinstance(e, lamb.node.Node):
