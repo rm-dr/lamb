@@ -1,3 +1,4 @@
+from subprocess import call
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit import print_formatted_text as printf
@@ -200,10 +201,9 @@ class Macro(ExpandableEndNode):
 
 	def expand(self):
 		if self.name in macro_table:
-			return macro_table[self.name]
+			return clone(macro_table[self.name])
 		else:
 			f = FreeVar(self.name)
-			f.set_parent(self.parent, self.parent_side) # type: ignore
 			return f
 
 	def clone(self):
@@ -391,12 +391,9 @@ def clone(expr: Node):
 	if isinstance(expr, EndNode):
 		return out
 
-	print("cloning", expr)
-
+	# We're not using a TreeWalker here because
+	# we need more control over our pointer when cloning.
 	while True:
-		print("p", ptr)
-		print("o", out_ptr)
-		print("r", out)
 		if isinstance(ptr, EndNode):
 			from_side, ptr = ptr.go_up()
 			_, out_ptr = out_ptr.go_up()
@@ -423,15 +420,6 @@ def clone(expr: Node):
 
 		if ptr is expr.parent:
 			break
-
-		if out_ptr is None:
-			print("fail")
-			print(out_ptr)
-			print(out)
-			print(ptr, expr.parent)
-			print("<fail")
-			#return False
-
 	return out
 
 def print_expr(expr) -> str:
@@ -445,8 +433,6 @@ def print_expr(expr) -> str:
 		out = ""
 
 	for s, n in expr:
-
-		print(out)
 		if isinstance(n, EndNode):
 			out += n.print_value()
 
@@ -533,7 +519,6 @@ def reduce(expr) -> tuple[bool, Node]:
 
 	reduced = False
 
-
 	for s, n in expr:
 		if isinstance(n, Call):
 			if s == Direction.UP:
@@ -550,7 +535,6 @@ def reduce(expr) -> tuple[bool, Node]:
 					reduced = True
 					break
 
-	print("r")
 	return reduced, expr
 
 
@@ -581,9 +565,8 @@ for l in [
 		macro_table[n.label] = n.expr
 		print(print_expr(n))
 	else:
-		for i in range(10):
+		for i in range(100):
 			r, n = reduce(n)
-			print(print_expr(n))
 			if not r:
 				break
-		#print(print_expr(clone(n)))
+		print(print_expr(n))
