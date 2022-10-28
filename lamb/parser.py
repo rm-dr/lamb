@@ -60,7 +60,7 @@ class LambdaParser:
 		self.pp_all = (
 			self.pp_expr ^
 			self.pp_macro_def ^
-			#self.pp_command ^
+			self.pp_command ^
 			self.pp_call
 		)
 

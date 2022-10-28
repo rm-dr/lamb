@@ -7,9 +7,7 @@ import os.path
 
 from pyparsing import exceptions as ppx
 
-import lamb.tokens
-import lamb.utils
-
+import lamb
 
 commands = {}
 help_texts = {}
@@ -114,7 +112,7 @@ def load(command, runner):
 			)
 			return
 
-		if not isinstance(x, lamb.tokens.macro_expression):
+		if not isinstance(x, lamb.runner.MacroDef):
 			printf(
 				FormattedText([
 					("class:warn", f"Skipping line {i+1:02}: "),

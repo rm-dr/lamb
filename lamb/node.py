@@ -124,8 +124,11 @@ class Node:
 	def __str__(self) -> str:
 		return print_node(self)
 
-	def bind_variables(self):
-		return bind_variables(self)
+	def bind_variables(self, *, ban_macro_name = None):
+		return bind_variables(
+			self,
+			ban_macro_name = ban_macro_name
+		)
 
 class EndNode(Node):
 	def print_value(self):
@@ -367,7 +370,7 @@ def clone(node: Node):
 			break
 	return out
 
-def bind_variables(node: Node) -> None:
+def bind_variables(node: Node, *, ban_macro_name = None) -> None:
 
 	if not isinstance(node, Node):
 		raise TypeError(f"I don't know what to do with a {type(node)}")
@@ -375,6 +378,15 @@ def bind_variables(node: Node) -> None:
 	bound_variables = {}
 
 	for s, n in node:
+
+		# If this expression is part of a macro,
+		# make sure we don't reference it inside itself.
+		#
+		# TODO: A chain of macros could be used to work around this. Fix that!
+		if isinstance(n, Macro) and ban_macro_name is not None:
+			if n.name == ban_macro_name:
+				raise ReductionError("Macro cannot reference self")
+
 		if isinstance(n, Func):
 			if s == Direction.UP:
 				# Add this function's input to the table of bound variables.

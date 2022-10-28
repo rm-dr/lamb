@@ -1,14 +1,9 @@
-from tkinter import E
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit import print_formatted_text as printf
-
 import enum
 
-import lamb.commands as commands
-from lamb.parser import LambdaParser
-import lamb.tokens as tokens
-import lamb.utils as utils
+import lamb
 
 
 class StopReason(enum.Enum):
@@ -18,20 +13,59 @@ class StopReason(enum.Enum):
 	INTERRUPT		= ("class:warn", "User interrupt")
 	RECURSION		= ("class:err", "Python Recursion Error")
 
+class MacroDef:
+	@staticmethod
+	def from_parse(result):
+		return MacroDef(
+			result[0].name,
+			result[1]
+		)
+
+	def __init__(self, label: str, expr: lamb.node.Node):
+		self.label = label
+		self.expr = expr
+
+	def __repr__(self):
+		return f"<{self.label} := {self.expr!r}>"
+
+	def __str__(self):
+		return f"{self.label} := {self.expr}"
+
+	def bind_variables(self, *, ban_macro_name = None):
+		return self.expr.bind_variables(
+			ban_macro_name = ban_macro_name
+		)
+
+class Command:
+	@staticmethod
+	def from_parse(result):
+		return Command(
+			result[0],
+			result[1:]
+		)
+
+	def __init__(self, name, args):
+		self.name = name
+		self.args = args
+
 
 class Runner:
-	def __init__(self, prompt_session: PromptSession, prompt_message):
+	def __init__(
+		self,
+		prompt_session: PromptSession,
+		prompt_message
+	):
 		self.macro_table = {}
 		self.prompt_session = prompt_session
 		self.prompt_message = prompt_message
-		self.parser = LambdaParser(
-			action_command		= tokens.command.from_parse,
-			action_macro_def	= tokens.macro_expression.from_parse,
-			action_church		= tokens.church_num.from_parse,
-			action_func			= tokens.lambda_func.from_parse,
-			action_bound		= tokens.macro.from_parse,
-			action_macro		= tokens.macro.from_parse,
-			action_apply		= tokens.lambda_apply.from_parse
+		self.parser = lamb.parser.LambdaParser(
+			action_func = lamb.node.Func.from_parse,
+			action_bound = lamb.node.Macro.from_parse,
+			action_macro = lamb.node.Macro.from_parse,
+			action_call = lamb.node.Call.from_parse,
+			action_church = lamb.node.Church.from_parse,
+			action_macro_def = MacroDef.from_parse,
+			action_command = Command.from_parse
 		)
 
 		# Maximum amount of reductions.
@@ -49,18 +83,15 @@ class Runner:
 
 	def parse(self, line):
 		e = self.parser.parse_line(line)
-		# Give the elements of this expression access to the runner.
-		# Runner must be set BEFORE variables are bound.
-		e.set_runner(self)
-		if isinstance(e, tokens.macro_expression):
+
+		if isinstance(e, MacroDef):
 			e.bind_variables(ban_macro_name = e.label)
-		else:
+		elif isinstance(e, lamb.node.Node):
 			e.bind_variables()
 		return e
 
 
-	def reduce_expression(self, expr: tokens.LambdaToken) -> None:
-
+	def reduce(self, node: lamb.node.Node) -> None:
 		# Reduction Counter.
 		# We also count macro (and church) expansions,
 		# and subtract those from the final count.
@@ -72,36 +103,39 @@ class Runner:
 		while (self.reduction_limit is None) or (i < self.reduction_limit):
 
 			try:
-				r = expr.reduce()
+				w, r = lamb.node.reduce(
+					node,
+					macro_table = self.macro_table
+				)
 			except RecursionError:
 				stop_reason = StopReason.RECURSION
 				break
-			expr = r.output
+			node = r
 
 			#print(expr)
 			#self.prompt()
 
 			# If we can't reduce this expression anymore,
 			# it's in beta-normal form.
-			if not r.was_reduced:
+			if not w:
 				stop_reason = StopReason.BETA_NORMAL
 				break
 
 			# Count reductions
 			#i += 1
-			if (
-					r.reduction_type == tokens.ReductionType.MACRO_EXPAND or
-					r.reduction_type == tokens.ReductionType.AUTOCHURCH
-				):
-				macro_expansions += 1
-			else:
-				i += 1
+			#if (
+			#		r.reduction_type == tokens.ReductionType.MACRO_EXPAND or
+			#		r.reduction_type == tokens.ReductionType.AUTOCHURCH
+			#	):
+			#	macro_expansions += 1
+			#else:
+			i += 1
 
 		if (
 			stop_reason == StopReason.BETA_NORMAL or
 			stop_reason == StopReason.LOOP_DETECTED
 			):
-			out_str = str(r.output) # type: ignore
+			out_str = str(r) # type: ignore
 
 			printf(FormattedText([
 				("class:result_header", f"\nExit reason: "),
@@ -116,7 +150,7 @@ class Runner:
 
 				("class:result_header", "\n\n    => "),
 				("class:text", out_str),
-			]), style = utils.style)
+			]), style = lamb.utils.style)
 		else:
 			printf(FormattedText([
 				("class:result_header", f"\nExit reason: "),
@@ -127,9 +161,14 @@ class Runner:
 
 				("class:result_header", f"\nReductions: "),
 				("class:text", str(i)),
-			]), style = utils.style)
+			]), style = lamb.utils.style)
 
-	def save_macro(self, macro: tokens.macro_expression, *, silent = False) -> None:
+	def save_macro(
+			self,
+			macro: MacroDef,
+			*,
+			silent = False
+		) -> None:
 		was_rewritten = macro.label in self.macro_table
 		self.macro_table[macro.label] = macro.expr
 
@@ -139,23 +178,28 @@ class Runner:
 				("class:syn_macro", macro.label),
 				("class:text", " to "),
 				("class:text", str(macro.expr))
-			]), style = utils.style)
+			]), style = lamb.utils.style)
 
 	# Apply a list of definitions
-	def run(self, line: str, *, silent = False) -> None:
+	def run(
+			self,
+			line: str,
+			*,
+			silent = False
+		) -> None:
 		e = self.parse(line)
 
 		# If this line is a macro definition, save the macro.
-		if isinstance(e, tokens.macro_expression):
+		if isinstance(e, MacroDef):
 			self.save_macro(e, silent = silent)
 
 		# If this line is a command, do the command.
-		elif isinstance(e, tokens.command):
-			commands.run(e, self)
+		elif isinstance(e, Command):
+			lamb.commands.run(e, self)
 
 		# If this line is a plain expression, reduce it.
-		elif isinstance(e, tokens.LambdaToken):
-			self.reduce_expression(e)
+		elif isinstance(e, lamb.node.Node):
+			self.reduce(e)
 
 		# We shouldn't ever get here.
 		else:
