@@ -1,7 +1,21 @@
 [project]
 name = "Lamb"
 description = "A lambda calculus engine"
-version = "0.0.0"
+
+# We use the standard semantic versioning:
+# maj.min.pat
+#
+# Major release:
+# 1.0.0 is the first stable release.
+# Incremented on BIG breaking changes.
+#
+# Minor release:
+# Large bug fixes, new features
+#
+# Patch release:
+# Small, compatible fixes.
+version = "0.1.0"
+
 dependencies = [
 	"prompt-toolkit==3.0.31",
 	"pyparsing==3.0.9"
