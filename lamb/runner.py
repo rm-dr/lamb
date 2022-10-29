@@ -1,7 +1,9 @@
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit import print_formatted_text as printf
+from prompt_toolkit.shortcuts import clear as clear_screen
 import enum
+import math
 
 import lamb
 
@@ -77,6 +79,11 @@ class Runner:
 		# a bound variable.
 		self.bound_variable_counter = 0
 
+		# Update iteration after this many iterations
+		# Make sure every place value has a non-zero digit
+		# so that all digits appear to be changing.
+		self.iter_update = 231
+
 	def prompt(self):
 		return self.prompt_session.prompt(message = self.prompt_message)
 
@@ -101,6 +108,10 @@ class Runner:
 
 		while (self.reduction_limit is None) or (i < self.reduction_limit):
 
+			# Show reduction count
+			if (i >= self.iter_update) and (i % self.iter_update == 0):
+				print(f" Reducing... {i}", end = "\r")
+
 			try:
 				red_type, new_node = lamb.node.reduce(
 					node,
@@ -123,6 +134,9 @@ class Runner:
 			if red_type == lamb.node.ReductionType.FUNCTION_APPLY:
 				macro_expansions += 1
 
+		if i >= self.iter_update:
+			# Clear reduction counter
+			print(" " * round(14 + math.log10(i)), end = "\r")
 
 		if (
 				stop_reason == StopReason.BETA_NORMAL or
