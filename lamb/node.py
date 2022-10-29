@@ -372,8 +372,8 @@ class Call(Node):
 def print_node(node: Node) -> str:
 	if not isinstance(node, Node):
 		raise TypeError(f"I don't know how to print a {type(node)}")
-	else:
-		out = ""
+
+	out = ""
 
 	for s, n in node:
 		if isinstance(n, EndNode):
@@ -489,16 +489,13 @@ def bind_variables(node: Node, *, ban_macro_name = None) -> None:
 # Returns the function's output.
 def call_func(fn: Func, arg: Node):
 	for s, n in fn:
-		if isinstance(n, Bound):
+		if isinstance(n, Bound) and (s == Direction.UP):
 			if n == fn.input:
 				if n.parent is None:
 					raise Exception("Tried to substitute a None bound variable.")
 
-				if n.parent_side == Direction.LEFT:
-					n.parent.left = clone(arg)
-				else:
-					n.parent.right = clone(arg)
-	return fn.left
+				n.parent.set_side(n.parent_side, clone(arg)) # type: ignore
+	return clone(fn.left)
 
 
 # Do a single reduction step
@@ -514,7 +511,10 @@ def reduce(node: Node, *, macro_table = {}) -> tuple[ReductionType, Node]:
 					out = call_func(n.left, n.right)
 					out._set_parent(None, None)
 				else:
-					n.parent.left = call_func(n.left, n.right)
+					n.parent.set_side(
+						n.parent_side, # type: ignore
+						call_func(n.left, n.right)
+					)
 
 				return ReductionType.FUNCTION_APPLY, out
 

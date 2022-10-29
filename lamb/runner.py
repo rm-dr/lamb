@@ -11,7 +11,6 @@ class StopReason(enum.Enum):
 	LOOP_DETECTED	= ("class:warn", "Loop detected")
 	MAX_EXCEEDED	= ("class:err", "Too many reductions")
 	INTERRUPT		= ("class:warn", "User interrupt")
-	RECURSION		= ("class:err", "Python Recursion Error")
 
 class MacroDef:
 	@staticmethod
@@ -107,9 +106,10 @@ class Runner:
 					node,
 					macro_table = self.macro_table
 				)
-			except RecursionError:
-				stop_reason = StopReason.RECURSION
+			except KeyboardInterrupt:
+				stop_reason = StopReason.INTERRUPT
 				break
+
 			node = new_node
 
 			# If we can't reduce this expression anymore,
