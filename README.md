@@ -13,12 +13,10 @@
  - Command and macro autocomplete
  - step-by-step reduction
  - Syntax highlighting: parenthesis, bound variables, macros, etc
- - Pin header to top of screen
  - PyPi package
  - Smart alignment in all printouts
  - Full-reduce option
- - Set reduction limit command
- - Runtime limit
+ - Free variable warning
 
 ## Mention in Docs
  - lambda functions only work with single-letter arguments

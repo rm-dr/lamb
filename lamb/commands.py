@@ -263,6 +263,7 @@ def help(command, runner) -> None:
 	printf(
 		HTML(
 			"\n<cmd_text>" +
+
 			"<cmd_h>Usage:</cmd_h>" +
 			"\n" +
 			"\tWrite lambda expressions using your <cmd_key>\\</cmd_key> key." +
@@ -277,6 +278,8 @@ def help(command, runner) -> None:
 				f"\t<cmd_code>{name}</cmd_code> \t {text}"
 				for name, text in help_texts.items()
 			]) +
+			"\n\n"
+			"<muted>Detailed documentation can be found on this project's git page.</muted>" +
 			"</cmd_text>"
 		),
 		style = lamb.utils.style

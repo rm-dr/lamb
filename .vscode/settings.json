@@ -6,6 +6,7 @@
         "onefile",
         "Packrat",
         "pyparsing",
+        "rlimit",
         "runstatus",
         "srange",
         "subvar"
