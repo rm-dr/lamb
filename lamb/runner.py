@@ -149,10 +149,10 @@ class Runner:
 			stop_reason.value,
 
 			("class:result_header", f"\nMacro expansions: "),
-			("class:text", str(macro_expansions)),
+			("class:text", f"{macro_expansions:,}"),
 
 			("class:result_header", f"\nReductions: "),
-			("class:text", f"{i}    "),
+			("class:text", f"{i:,}    "),
 			("class:muted", f"(Limit: {self.reduction_limit:,})")
 		]
 
