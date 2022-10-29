@@ -1,4 +1,5 @@
 import enum
+import lamb
 
 class Direction(enum.Enum):
 	UP		= enum.auto()
@@ -207,6 +208,12 @@ class Node:
 	def __str__(self) -> str:
 		return print_node(self)
 
+	def export(self) -> str:
+		"""
+		Convert this tree to a parsable string.
+		"""
+		return print_node(self, export = True)
+
 	def bind_variables(self, *, ban_macro_name = None):
 		return bind_variables(
 			self,
@@ -214,7 +221,7 @@ class Node:
 		)
 
 class EndNode(Node):
-	def print_value(self):
+	def print_value(self, *, export: bool = False) -> str:
 		raise NotImplementedError("EndNodes MUST provide a `print_value` method!")
 
 class ExpandableEndNode(EndNode):
@@ -228,8 +235,11 @@ class FreeVar(EndNode):
 	def __repr__(self):
 		return f"<freevar {self.name}>"
 
-	def print_value(self):
-		return f"{self.name}"
+	def print_value(self, *, export: bool = False) -> str:
+		if export:
+			return f"{self.name}'"
+		else:
+			return f"{self.name}'"
 
 	def copy(self):
 		return FreeVar(self.name)
@@ -248,7 +258,7 @@ class Macro(ExpandableEndNode):
 	def __repr__(self):
 		return f"<macro {self.name}>"
 
-	def print_value(self):
+	def print_value(self, *, export: bool = False) -> str:
 		return self.name
 
 	def expand(self, *, macro_table = {}) -> tuple[ReductionType, Node]:
@@ -274,7 +284,7 @@ class Church(ExpandableEndNode):
 	def __repr__(self):
 		return f"<church {self.value}>"
 
-	def print_value(self):
+	def print_value(self, *, export: bool = False) -> str:
 		return str(self.value)
 
 	def expand(self, *, macro_table = {}) -> tuple[ReductionType, Node]:
@@ -316,7 +326,7 @@ class Bound(EndNode):
 	def __repr__(self):
 		return f"<{self.name} {self.identifier}>"
 
-	def print_value(self):
+	def print_value(self, *, export: bool = False) -> str:
 		return self.name
 
 class Func(Node):
@@ -378,15 +388,31 @@ class Call(Node):
 		return Call(None, None)  # type: ignore
 
 
-def print_node(node: Node) -> str:
+def print_node(node: Node, *, export: bool = False) -> str:
 	if not isinstance(node, Node):
 		raise TypeError(f"I don't know how to print a {type(node)}")
 
 	out = ""
 
+	bound_subs = {}
+
 	for s, n in node:
 		if isinstance(n, EndNode):
-			out += n.print_value()
+			if isinstance(n, Bound):
+				if n.identifier not in bound_subs.keys():
+					o = n.print_value(export = export)
+					if o in bound_subs.items():
+						i = 1
+						while o in bound_subs.items():
+							o = lamb.utils.subscript(i := i + 1)
+						bound_subs[n.identifier] = o
+					else:
+						bound_subs[n.identifier] = n.print_value()
+
+
+				out += bound_subs[n.identifier]
+			else:
+				out += n.print_value(export = export)
 
 		elif isinstance(n, Func):
 			if s == Direction.UP:
@@ -502,7 +528,7 @@ def call_func(fn: Func, arg: Node):
 					raise Exception("Tried to substitute a None bound variable.")
 
 				n.parent.set_side(n.parent_side, clone(arg)) # type: ignore
-	return clone(fn.left)
+	return fn.left
 
 
 # Do a single reduction step

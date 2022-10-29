@@ -62,7 +62,7 @@ def cmd_save(command, runner) -> None:
 
 	with open(target, "w") as f:
 		f.write("\n".join(
-			[f"{n} = {e}" for n, e in runner.macro_table.items()]
+			[f"{n} = {e.export()}" for n, e in runner.macro_table.items()]
 		))
 
 	printf(

@@ -30,7 +30,7 @@ To define macros, use `=`. For example,
 
 Note that there are spaces in `λa.a F T`. With no spaces, `aFT` will be parsed as one variable. \
 Lambda functions can only take single-letter, lowercase arguments. `λA.A` is not valid syntax. \
-Unbound variables (upper and lower case) that aren't macros will become free variables.
+Unbound variables (upper and lower case) that aren't macros will become free variables. Free variables will be shown with a `'`, like `a'`.
 
 Be careful, macros are case-sensitive. If you define a macro `MAC` and accidentally write `mac` in the prompt, `mac` will become a free variable.
 
@@ -76,7 +76,6 @@ Lamb treats each λ expression as a binary tree. Variable binding and reduction 
 
 ## Todo (pre-release):
  - Make command output accessible in prompt
- - Prettyprint functions and rename bound variables
  - Prettier colors
  - Prevent macro-chaining recursion
  - step-by-step reduction
@@ -86,11 +85,9 @@ Lamb treats each λ expression as a binary tree. Variable binding and reduction 
 
 
 ## Todo:
- - Optimization: clone only if absolutely necessary
  - Better class mutation: when is a node no longer valid?
  - Loop detection
  - Command-line options (load a file, run a set of commands)
  - $\alpha$-equivalence check
  - Unchurch macro: make church numerals human-readable
- - Smart alignment in all printouts
  - Syntax highlighting: parenthesis, bound variables, macros, etc

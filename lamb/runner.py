@@ -116,7 +116,7 @@ class Runner:
 
 			# Show reduction count
 			if (i >= self.iter_update) and (i % self.iter_update == 0):
-				print(f" Reducing... {i}", end = "\r")
+				print(f" Reducing... {i:,}", end = "\r")
 
 			try:
 				red_type, node = lamb.node.reduce(
