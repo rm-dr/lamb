@@ -1,7 +1,6 @@
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit import print_formatted_text as printf
-from prompt_toolkit.shortcuts import clear as clear_screen
 import enum
 import math
 import time
@@ -86,7 +85,9 @@ class Runner:
 		self.iter_update = 231
 
 	def prompt(self):
-		return self.prompt_session.prompt(message = self.prompt_message)
+		return self.prompt_session.prompt(
+			message = self.prompt_message
+		)
 
 	def parse(self, line):
 		e = self.parser.parse_line(line)
@@ -151,7 +152,8 @@ class Runner:
 			("class:text", str(macro_expansions)),
 
 			("class:result_header", f"\nReductions: "),
-			("class:text", str(i))
+			("class:text", f"{i}    "),
+			("class:muted", f"(Limit: {self.reduction_limit:,})")
 		]
 
 		if (stop_reason == StopReason.BETA_NORMAL or stop_reason == StopReason.LOOP_DETECTED):

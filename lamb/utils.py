@@ -11,6 +11,7 @@ style = Style.from_dict({ # type: ignore
 	"err": "#FF0000",
 	"prompt": "#00FFFF",
 	"ok": "#B4EC85",
+	"muted": "#AAAAAA",
 
 	# Syntax
 	"syn_macro": "#FF00FF",

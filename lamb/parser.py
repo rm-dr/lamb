@@ -54,7 +54,7 @@ class LambdaParser:
 			(self.lp + self.pp_call + self.rp)
 		)
 
-		self.pp_command = pp.Suppress(":") + pp.Word(pp.alphas + "_") + pp.Word(pp.alphas + "_")[0, ...]
+		self.pp_command = pp.Suppress(":") + pp.Word(pp.alphas + "_") + pp.Word(pp.alphas + pp.nums + "_")[0, ...]
 
 
 		self.pp_all = (

@@ -36,7 +36,7 @@ def cmd_save(command, runner) -> None:
 	if len(command.args) != 1:
 		printf(
 			HTML(
-				"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
+				f"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
 			),
 			style = lamb.utils.style
 		)
@@ -81,7 +81,7 @@ def cmd_load(command, runner):
 	if len(command.args) != 1:
 		printf(
 			HTML(
-				"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
+				f"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
 			),
 			style = lamb.utils.style
 		)
@@ -145,7 +145,7 @@ def mdel(command, runner) -> None:
 	if len(command.args) != 1:
 		printf(
 			HTML(
-				"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
+				f"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
 			),
 			style = lamb.utils.style
 		)
@@ -184,6 +184,76 @@ def macros(command, runner) -> None:
 def clear(command, runner) -> None:
 	clear_screen()
 	lamb.utils.show_greeting()
+
+@lamb_command(
+	help_text = "Get or set reduction limit"
+)
+def rlimit(command, runner) -> None:
+	if len(command.args) == 0:
+		if runner.reduction_limit is None:
+			printf(
+				HTML(
+					"<ok>No reduction limit is set</ok>"
+				),
+				style = lamb.utils.style
+			)
+		else:
+			printf(
+				HTML(
+					f"<ok>Reduction limit is {runner.reduction_limit:,}</ok>"
+				),
+				style = lamb.utils.style
+			)
+		return
+
+	elif len(command.args) != 1:
+		printf(
+			HTML(
+				f"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
+			),
+			style = lamb.utils.style
+		)
+		return
+
+	t = command.args[0]
+	if t.lower() == "none":
+		runner.reduction_limit = None
+		printf(
+			HTML(
+				f"<ok>Removed reduction limit</ok>"
+			),
+			style = lamb.utils.style
+		)
+		return
+
+	try:
+		t = int(t)
+	except ValueError:
+		printf(
+			HTML(
+				"<err>Reduction limit must be a positive integer or \"none\".</err>"
+			),
+			style = lamb.utils.style
+		)
+		return
+
+	if 50 > t:
+		printf(
+			HTML(
+				"<err>Reduction limit must be at least 50.</err>"
+			),
+			style = lamb.utils.style
+		)
+		return
+
+	runner.reduction_limit = t
+	printf(
+		HTML(
+			f"<ok>Set reduction limit to {t:,}</ok>"
+		),
+		style = lamb.utils.style
+	)
+
 
 
 @lamb_command(
