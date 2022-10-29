@@ -152,6 +152,14 @@ class Node:
 		else:
 			raise TypeError("Can only set left or right side.")
 
+	def get_side(self, side: Direction):
+		if side == Direction.LEFT:
+			return self.left
+		elif side == Direction.RIGHT:
+			return self.right
+		else:
+			raise TypeError("Can only get left or right side.")
+
 
 	def go_left(self):
 		"""
@@ -210,7 +218,7 @@ class EndNode(Node):
 		raise NotImplementedError("EndNodes MUST provide a `print_value` method!")
 
 class ExpandableEndNode(EndNode):
-	def expand(self) -> tuple[ReductionType, Node]:
+	def expand(self, *, macro_table = {}) -> tuple[ReductionType, Node]:
 		raise NotImplementedError("ExpandableEndNodes MUST provide an `expand` method!")
 
 class FreeVar(EndNode):
@@ -269,7 +277,7 @@ class Church(ExpandableEndNode):
 	def print_value(self):
 		return str(self.value)
 
-	def expand(self) -> tuple[ReductionType, Node]:
+	def expand(self, *, macro_table = {}) -> tuple[ReductionType, Node]:
 		f = Bound("f")
 		a = Bound("a")
 		chain = a
@@ -518,12 +526,57 @@ def reduce(node: Node, *, macro_table = {}) -> tuple[ReductionType, Node]:
 				return ReductionType.FUNCTION_APPLY, out
 
 			elif isinstance(n.left, ExpandableEndNode):
-				if isinstance(n.left, Macro):
-					r, n.left = n.left.expand(
-						macro_table = macro_table
-					)
-				else:
-					r, n.left = n.left.expand()
+				r, n.left = n.left.expand(
+					macro_table = macro_table
+				)
 				return r, out
-
 	return ReductionType.NOTHING, out
+
+
+
+# Expand all expandable end nodes.
+def force_expand_macros(node: Node, *, macro_table = {}) -> tuple[int, Node]:
+	if not isinstance(node, Node):
+		raise TypeError(f"I can't reduce a {type(node)}")
+
+
+	out = clone(node)
+	ptr = out
+	from_side = Direction.UP
+	macro_expansions = 0
+
+	while True:
+		if isinstance(ptr, ExpandableEndNode):
+			if ptr.parent is None:
+				ptr = ptr.expand(macro_table = macro_table)[1]
+				out = ptr
+				ptr._set_parent(None, None)
+			else:
+				ptr.parent.set_side(
+					ptr.parent_side, # type: ignore
+					ptr.expand(macro_table = macro_table)[1]
+				)
+				ptr = ptr.parent.get_side(
+					ptr.parent_side # type: ignore
+				)
+			macro_expansions += 1
+
+
+		if isinstance(ptr, EndNode):
+			from_side, ptr = ptr.go_up()
+		elif isinstance(ptr, Func):
+			if from_side == Direction.UP:
+				from_side, ptr = ptr.go_left()
+			elif from_side == Direction.LEFT:
+				from_side, ptr = ptr.go_up()
+		elif isinstance(ptr, Call):
+			if from_side == Direction.UP:
+				from_side, ptr = ptr.go_left()
+			elif from_side == Direction.LEFT:
+				from_side, ptr = ptr.go_right()
+			elif from_side == Direction.RIGHT:
+				from_side, ptr = ptr.go_up()
+		if ptr is node.parent:
+			break
+
+	return macro_expansions, out # type: ignore

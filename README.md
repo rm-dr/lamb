@@ -64,7 +64,7 @@ Lamb comes with a few commands. Prefix them with a `:`
 
 ## Internals
 
-Lamb treats each λ expression as a binary tree. Variable binding and reduction are all simple operations on that tree. All the magic happens inside [`nodes.py`](./lamb/nodes.py).
+Lamb treats each λ expression as a binary tree. Variable binding and reduction are all simple operations on that tree. All this magic happens in [`nodes.py`](./lamb/nodes.py).
 
 **Highlights:**
  - `TreeWalker` is the iterator we (usually) use to traverse our tree. It walks the "perimeter" of the tree, visiting some nodes multiple times.
@@ -80,16 +80,17 @@ Lamb treats each λ expression as a binary tree. Variable binding and reduction 
  - Prettier colors
  - Prevent macro-chaining recursion
  - step-by-step reduction
+ - Full-reduce option (expand all macros)
  - Show a warning when a free variable is created
  - PyPi package
 
 
 ## Todo:
+ - Optimization: clone only if absolutely necessary
+ - Better class mutation: when is a node no longer valid?
+ - Loop detection
  - Command-line options (load a file, run a set of commands)
  - $\alpha$-equivalence check
  - Unchurch macro: make church numerals human-readable
- - Full-reduce option (expand all macros)
- - Print macro content if only a macro is typed
  - Smart alignment in all printouts
  - Syntax highlighting: parenthesis, bound variables, macros, etc
-

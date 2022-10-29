@@ -108,6 +108,9 @@ class Runner:
 
 		stop_reason = StopReason.MAX_EXCEEDED
 		start_time = time.time()
+		full_reduce = isinstance(node, lamb.node.ExpandableEndNode)
+		out_text = []
+
 
 		while (self.reduction_limit is None) or (i < self.reduction_limit):
 
@@ -116,15 +119,13 @@ class Runner:
 				print(f" Reducing... {i}", end = "\r")
 
 			try:
-				red_type, new_node = lamb.node.reduce(
+				red_type, node = lamb.node.reduce(
 					node,
 					macro_table = self.macro_table
 				)
 			except KeyboardInterrupt:
 				stop_reason = StopReason.INTERRUPT
 				break
-
-			node = new_node
 
 			# If we can't reduce this expression anymore,
 			# it's in beta-normal form.
@@ -137,12 +138,20 @@ class Runner:
 			if red_type == lamb.node.ReductionType.FUNCTION_APPLY:
 				macro_expansions += 1
 
+		# Expand all macros if we need to
+		if full_reduce:
+			m, node = lamb.node.force_expand_macros(
+				node,
+				macro_table = self.macro_table
+			)
+			macro_expansions += m
+
 		if i >= self.iter_update:
 			# Clear reduction counter
 			print(" " * round(14 + math.log10(i)), end = "\r")
 
-		out_text = [
-			("class:result_header", f"\nRuntime: "),
+		out_text += [
+			("class:result_header", f"Runtime: "),
 			("class:text", f"{time.time() - start_time:.03f} seconds"),
 
 			("class:result_header", f"\nExit reason: "),
@@ -152,14 +161,19 @@ class Runner:
 			("class:text", f"{macro_expansions:,}"),
 
 			("class:result_header", f"\nReductions: "),
-			("class:text", f"{i:,}    "),
+			("class:text", f"{i:,}\t"),
 			("class:muted", f"(Limit: {self.reduction_limit:,})")
 		]
+
+		if full_reduce:
+			out_text += [
+				("class:warn", "\nAll macros have been expanded")
+			]
 
 		if (stop_reason == StopReason.BETA_NORMAL or stop_reason == StopReason.LOOP_DETECTED):
 			out_text += [
 				("class:result_header", "\n\n    => "),
-				("class:text", str(new_node)), # type: ignore
+				("class:text", str(node)), # type: ignore
 			]
 
 		printf(
