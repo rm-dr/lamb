@@ -11,6 +11,7 @@ style = Style.from_dict({ # type: ignore
 	"err": "#FF0000",
 	"prompt": "#00FFFF",
 	"ok": "#B4EC85",
+	"code": "#AAAAAA italic",
 	"muted": "#AAAAAA",
 
 	# Syntax
@@ -23,12 +24,8 @@ style = Style.from_dict({ # type: ignore
 
 	# Command formatting
 	# cmd_h:    section titles
-	# cmd_code: example snippets
-	# cmd_text: regular text
 	# cmd_key:  keyboard keys, usually one character
 	"cmd_h": "#FF6600 bold",
-	"cmd_code": "#AAAAAA italic",
-	"cmd_text": "#FFFFFF",
 	"cmd_key": "#B4EC85 bold",
 
 	# Only used in greeting

@@ -36,7 +36,7 @@ def cmd_save(command, runner) -> None:
 	if len(command.args) != 1:
 		printf(
 			HTML(
-				f"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
+				f"<err>Command <code>:{command.name}</code> takes exactly one argument.</err>"
 			),
 			style = lamb.utils.style
 		)
@@ -67,7 +67,7 @@ def cmd_save(command, runner) -> None:
 
 	printf(
 		HTML(
-			f"Wrote {len(runner.macro_table)} macros to <cmd_code>{target}</cmd_code>"
+			f"Wrote {len(runner.macro_table)} macros to <code>{target}</code>"
 		),
 		style = lamb.utils.style
 	)
@@ -81,7 +81,7 @@ def cmd_load(command, runner):
 	if len(command.args) != 1:
 		printf(
 			HTML(
-				f"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
+				f"<err>Command <code>:{command.name}</code> takes exactly one argument.</err>"
 			),
 			style = lamb.utils.style
 		)
@@ -108,9 +108,9 @@ def cmd_load(command, runner):
 			printf(
 				FormattedText([
 					("class:warn", f"Syntax error on line {i+1:02}: "),
-					("class:cmd_code", l[:e.loc]),
+					("class:code", l[:e.loc]),
 					("class:err", l[e.loc]),
-					("class:cmd_code", l[e.loc+1:])
+					("class:code", l[e.loc+1:])
 				]),
 				style = lamb.utils.style
 			)
@@ -120,7 +120,7 @@ def cmd_load(command, runner):
 			printf(
 				FormattedText([
 					("class:warn", f"Skipping line {i+1:02}: "),
-					("class:cmd_code", l),
+					("class:code", l),
 					("class:warn", f" is not a macro definition.")
 				]),
 				style = lamb.utils.style
@@ -132,7 +132,7 @@ def cmd_load(command, runner):
 		printf(
 			FormattedText([
 				("class:ok", f"Loaded {x.label}: "),
-				("class:cmd_code", str(x.expr))
+				("class:code", str(x.expr))
 			]),
 			style = lamb.utils.style
 		)
@@ -145,7 +145,7 @@ def mdel(command, runner) -> None:
 	if len(command.args) != 1:
 		printf(
 			HTML(
-				f"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
+				f"<err>Command <code>:{command.name}</code> takes exactly one argument.</err>"
 			),
 			style = lamb.utils.style
 		)
@@ -172,7 +172,7 @@ def macros(command, runner) -> None:
 			("class:cmd_h", "\nDefined Macros:\n"),
 		] +
 		[
-			("class:cmd_text", f"\t{name} \t {exp}\n")
+			("class:text", f"\t{name} \t {exp}\n")
 			for name, exp in runner.macro_table.items()
 		]),
 		style = lamb.utils.style
@@ -209,7 +209,7 @@ def rlimit(command, runner) -> None:
 	elif len(command.args) != 1:
 		printf(
 			HTML(
-				f"<err>Command <cmd_code>:{command.name}</cmd_code> takes exactly one argument.</err>"
+				f"<err>Command <code>:{command.name}</code> takes exactly one argument.</err>"
 			),
 			style = lamb.utils.style
 		)
@@ -262,25 +262,27 @@ def rlimit(command, runner) -> None:
 def help(command, runner) -> None:
 	printf(
 		HTML(
-			"\n<cmd_text>" +
+			"\n<text>" +
 
 			"<cmd_h>Usage:</cmd_h>" +
 			"\n" +
 			"\tWrite lambda expressions using your <cmd_key>\\</cmd_key> key." +
 			"\n" +
-			"\tMacros can be defined using <cmd_key>=</cmd_key>, as in <cmd_code>T = λab.a</cmd_code>" +
+			"\tMacros can be defined using <cmd_key>=</cmd_key>, as in <code>T = λab.a</code>" +
 			"\n" +
-			"\tRun commands using <cmd_key>:</cmd_key>, for example <cmd_code>:help</cmd_code>" +
+			"\tRun commands using <cmd_key>:</cmd_key>, for example <code>:help</code>" +
+			"\n" +
+			"\tHistory can be accessed with <cmd_key>$</cmd_key>, which will expand to the result of the last successful reduction." +
 			"\n\n" +
 			"<cmd_h>Commands:</cmd_h>"+
 			"\n" +
 			"\n".join([
-				f"\t<cmd_code>{name}</cmd_code> \t {text}"
+				f"\t<code>{name}</code> \t {text}"
 				for name, text in help_texts.items()
 			]) +
 			"\n\n"
 			"<muted>Detailed documentation can be found on this project's git page.</muted>" +
-			"</cmd_text>"
+			"</text>"
 		),
 		style = lamb.utils.style
 	)
