@@ -84,6 +84,7 @@ class TreeWalker:
 class Node:
 	"""
 	Generic class for an element of an expression tree.
+	All nodes are subclasses of this.
 	"""
 
 	def __init__(self):
@@ -451,8 +452,6 @@ def bind_variables(node: Node, *, ban_macro_name = None) -> None:
 
 		# If this expression is part of a macro,
 		# make sure we don't reference it inside itself.
-		#
-		# TODO: A chain of macros could be used to work around this. Fix that!
 		if isinstance(n, Macro) and ban_macro_name is not None:
 			if n.name == ban_macro_name:
 				raise ReductionError("Macro cannot reference self")
