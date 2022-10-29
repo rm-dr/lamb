@@ -14,6 +14,9 @@ class ReductionType(enum.Enum):
 	# We replaced a macro with an expression.
 	MACRO_EXPAND	= enum.auto()
 
+	# We expanded a history reference
+	HIST_EXPAND 	= enum.auto()
+
 	# We turned a church numeral into an expression
 	AUTOCHURCH		= enum.auto()
 
@@ -100,6 +103,10 @@ class Node:
 		# Left and right nodes, None if empty
 		self._left: Node | None = None
 		self._right: Node | None = None
+
+		# The runner this node is attached to.
+		# Set by Node.set_runner()
+		self.runner: lamb.runner.Runner = None # type: ignore
 
 	def __iter__(self):
 		return TreeWalker(self)
@@ -220,17 +227,25 @@ class Node:
 			ban_macro_name = ban_macro_name
 		)
 
+	def set_runner(self, runner):
+		for s, n in self:
+			if s == Direction.UP:
+				n.runner = runner # type: ignore
+		return self
+
 class EndNode(Node):
 	def print_value(self, *, export: bool = False) -> str:
 		raise NotImplementedError("EndNodes MUST provide a `print_value` method!")
 
 class ExpandableEndNode(EndNode):
-	def expand(self, *, macro_table = {}) -> tuple[ReductionType, Node]:
+	always_expand = False
+	def expand(self) -> tuple[ReductionType, Node]:
 		raise NotImplementedError("ExpandableEndNodes MUST provide an `expand` method!")
 
 class FreeVar(EndNode):
-	def __init__(self, name: str):
+	def __init__(self, name: str, *, runner = None):
 		self.name = name
+		self.runner = runner # type: ignore
 
 	def __repr__(self):
 		return f"<freevar {self.name}>"
@@ -249,11 +264,12 @@ class Macro(ExpandableEndNode):
 	def from_parse(results):
 		return Macro(results[0])
 
-	def __init__(self, name: str) -> None:
+	def __init__(self, name: str, *, runner = None) -> None:
 		super().__init__()
 		self.name = name
 		self.left = None
 		self.right = None
+		self.runner = runner # type: ignore
 
 	def __repr__(self):
 		return f"<macro {self.name}>"
@@ -261,25 +277,26 @@ class Macro(ExpandableEndNode):
 	def print_value(self, *, export: bool = False) -> str:
 		return self.name
 
-	def expand(self, *, macro_table = {}) -> tuple[ReductionType, Node]:
-		if self.name in macro_table:
-			return ReductionType.MACRO_EXPAND, clone(macro_table[self.name])
+	def expand(self) -> tuple[ReductionType, Node]:
+		if self.name in self.runner.macro_table:
+			return ReductionType.MACRO_EXPAND, clone(self.runner.macro_table[self.name])
 		else:
-			return ReductionType.MACRO_TO_FREE, FreeVar(self.name)
+			return ReductionType.MACRO_TO_FREE, FreeVar(self.name, runner = self.runner)
 
 	def copy(self):
-		return Macro(self.name)
+		return Macro(self.name, runner = self.runner)
 
 class Church(ExpandableEndNode):
 	@staticmethod
 	def from_parse(results):
 		return Church(int(results[0]))
 
-	def __init__(self, value: int) -> None:
+	def __init__(self, value: int, *, runner = None) -> None:
 		super().__init__()
 		self.value = value
 		self.left = None
 		self.right = None
+		self.runner = runner # type: ignore
 
 	def __repr__(self):
 		return f"<church {self.value}>"
@@ -287,7 +304,7 @@ class Church(ExpandableEndNode):
 	def print_value(self, *, export: bool = False) -> str:
 		return str(self.value)
 
-	def expand(self, *, macro_table = {}) -> tuple[ReductionType, Node]:
+	def expand(self) -> tuple[ReductionType, Node]:
 		f = Bound("f")
 		a = Bound("a")
 		chain = a
@@ -297,17 +314,46 @@ class Church(ExpandableEndNode):
 
 		return (
 			ReductionType.AUTOCHURCH,
-			Func(f, Func(a, chain))
+			Func(f, Func(a, chain)).set_runner(self.runner)
 		)
 
 	def copy(self):
-		return Church(self.value)
+		return Church(self.value, runner = self.runner)
+
+class History(ExpandableEndNode):
+	always_expand = True
+
+	@staticmethod
+	def from_parse(results):
+		return History()
+
+	def __init__(self, *, runner = None) -> None:
+		super().__init__()
+		self.left = None
+		self.right = None
+		self.runner = runner # type: ignore
+
+	def __repr__(self):
+		return f"<$>"
+
+	def print_value(self, *, export: bool = False) -> str:
+		return "$"
+
+	def expand(self) -> tuple[ReductionType, Node]:
+		if len(self.runner.history) == 0:
+			raise ReductionError(f"There isn't any history to reference.")
+		return ReductionType.HIST_EXPAND, clone(self.runner.history[-1])
+
+	def copy(self):
+		return History(runner = self.runner)
+
 
 bound_counter = 0
 class Bound(EndNode):
-	def __init__(self, name: str, *, forced_id = None):
+	def __init__(self, name: str, *, forced_id = None, runner = None):
 		self.name = name
 		global bound_counter
+		self.runner = runner # type: ignore
 
 		if forced_id is None:
 			self.identifier = bound_counter
@@ -316,7 +362,7 @@ class Bound(EndNode):
 			self.identifier = forced_id
 
 	def copy(self):
-		return Bound(self.name, forced_id = self.identifier)
+		return Bound(self.name, forced_id = self.identifier, runner = self.runner)
 
 	def __eq__(self, other):
 		if not isinstance(other, Bound):
@@ -343,17 +389,18 @@ class Func(Node):
 				Func.from_parse(result)
 			)
 
-	def __init__(self, input: Macro | Bound, output: Node) -> None:
+	def __init__(self, input: Macro | Bound, output: Node, *, runner = None) -> None:
 		super().__init__()
 		self.input: Macro | Bound = input
 		self.left: Node = output
 		self.right: None = None
+		self.runner = runner # type: ignore
 
 	def __repr__(self):
 		return f"<func {self.input!r} {self.left!r}>"
 
 	def copy(self):
-		return Func(self.input, None) # type: ignore
+		return Func(self.input, None, runner = self.runner) # type: ignore
 
 class Call(Node):
 	@staticmethod
@@ -376,16 +423,17 @@ class Call(Node):
 				)] + results[2:]
 			)
 
-	def __init__(self, fn: Node, arg: Node) -> None:
+	def __init__(self, fn: Node, arg: Node, *, runner = None) -> None:
 		super().__init__()
 		self.left: Node = fn
 		self.right: Node = arg
+		self.runner = runner # type: ignore
 
 	def __repr__(self):
 		return f"<call {self.left!r} {self.right!r}>"
 
 	def copy(self):
-		return Call(None, None)  # type: ignore
+		return Call(None, None, runner = self.runner) # type: ignore
 
 
 def print_node(node: Node, *, export: bool = False) -> str:
@@ -476,21 +524,31 @@ def clone(node: Node):
 			break
 	return out
 
-def bind_variables(node: Node, *, ban_macro_name = None) -> None:
+def bind_variables(node: Node, *, ban_macro_name = None) -> dict:
 	if not isinstance(node, Node):
 		raise TypeError(f"I don't know what to do with a {type(node)}")
 
 	bound_variables = {}
 
+	output = {
+		"has_history": False,
+		"free_variables": set()
+	}
+
 	for s, n in node:
+		if isinstance(n, History):
+			output["has_history"] = True
 
 		# If this expression is part of a macro,
 		# make sure we don't reference it inside itself.
-		if isinstance(n, Macro) and ban_macro_name is not None:
-			if n.name == ban_macro_name:
+		elif isinstance(n, Macro):
+			if (n.name == ban_macro_name) and (ban_macro_name is not None):
 				raise ReductionError("Macro cannot reference self")
 
-		if isinstance(n, Func):
+			if n.name not in node.runner.macro_table:
+				output["free_variables"].add(n.name)
+
+		elif isinstance(n, Func):
 			if s == Direction.UP:
 				# Add this function's input to the table of bound variables.
 				# If it is already there, raise an error.
@@ -517,6 +575,7 @@ def bind_variables(node: Node, *, ban_macro_name = None) -> None:
 				if isinstance(n.right, Macro):
 					if n.right.name in bound_variables:
 						n.right = clone(bound_variables[n.right.name])
+	return output
 
 # Apply a function.
 # Returns the function's output.
@@ -532,7 +591,7 @@ def call_func(fn: Func, arg: Node):
 
 
 # Do a single reduction step
-def reduce(node: Node, *, macro_table = {}) -> tuple[ReductionType, Node]:
+def reduce(node: Node) -> tuple[ReductionType, Node]:
 	if not isinstance(node, Node):
 		raise TypeError(f"I can't reduce a {type(node)}")
 
@@ -552,16 +611,14 @@ def reduce(node: Node, *, macro_table = {}) -> tuple[ReductionType, Node]:
 				return ReductionType.FUNCTION_APPLY, out
 
 			elif isinstance(n.left, ExpandableEndNode):
-				r, n.left = n.left.expand(
-					macro_table = macro_table
-				)
+				r, n.left = n.left.expand()
 				return r, out
 	return ReductionType.NOTHING, out
 
 
 
 # Expand all expandable end nodes.
-def force_expand_macros(node: Node, *, macro_table = {}) -> tuple[int, Node]:
+def finalize_macros(node: Node, *, force = False) -> tuple[int, Node]:
 	if not isinstance(node, Node):
 		raise TypeError(f"I can't reduce a {type(node)}")
 
@@ -572,15 +629,18 @@ def force_expand_macros(node: Node, *, macro_table = {}) -> tuple[int, Node]:
 	macro_expansions = 0
 
 	while True:
-		if isinstance(ptr, ExpandableEndNode):
+		if (
+				isinstance(ptr, ExpandableEndNode) and
+				(force or ptr.always_expand)
+			):
 			if ptr.parent is None:
-				ptr = ptr.expand(macro_table = macro_table)[1]
+				ptr = ptr.expand()[1]
 				out = ptr
 				ptr._set_parent(None, None)
 			else:
 				ptr.parent.set_side(
 					ptr.parent_side, # type: ignore
-					ptr.expand(macro_table = macro_table)[1]
+					ptr.expand()[1]
 				)
 				ptr = ptr.parent.get_side(
 					ptr.parent_side # type: ignore

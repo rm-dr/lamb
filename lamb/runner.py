@@ -37,6 +37,9 @@ class MacroDef:
 			ban_macro_name = ban_macro_name
 		)
 
+	def set_runner(self, runner):
+		return self.expr.set_runner(runner)
+
 class Command:
 	@staticmethod
 	def from_parse(result):
@@ -66,7 +69,8 @@ class Runner:
 			action_call = lamb.node.Call.from_parse,
 			action_church = lamb.node.Church.from_parse,
 			action_macro_def = MacroDef.from_parse,
-			action_command = Command.from_parse
+			action_command = Command.from_parse,
+			action_history = lamb.node.History.from_parse
 		)
 
 		# Maximum amount of reductions.
@@ -84,22 +88,48 @@ class Runner:
 		# so that all digits appear to be changing.
 		self.iter_update = 231
 
+		self.history = []
+
 	def prompt(self):
 		return self.prompt_session.prompt(
 			message = self.prompt_message
 		)
 
-	def parse(self, line):
+	def parse(self, line) -> tuple[lamb.node.Node | MacroDef | Command, dict]:
 		e = self.parser.parse_line(line)
 
+		o = {}
 		if isinstance(e, MacroDef):
-			e.bind_variables(ban_macro_name = e.label)
+			e.set_runner(self)
+			o = e.bind_variables(ban_macro_name = e.label)
 		elif isinstance(e, lamb.node.Node):
-			e.bind_variables()
-		return e
+			e.set_runner(self)
+			o = e.bind_variables()
+		return e, o
 
 
-	def reduce(self, node: lamb.node.Node) -> None:
+	def reduce(self, node: lamb.node.Node, *, status = {}) -> None:
+
+		# Show warnings
+		warning_text = []
+
+		if status["has_history"] and len(self.history) != 0:
+			warning_text += [
+				("class:code", "$"),
+				("class:warn", " will be expanded to "),
+				("class:code", str(self.history[-1])),
+				("class:warn", "\n")
+			]
+
+		for i in status["free_variables"]:
+			warning_text += [
+				("class:warn", "Macro "),
+				("class:code", i),
+				("class:warn", " will become a free variable.\n"),
+			]
+
+		printf(FormattedText(warning_text), style = lamb.utils.style)
+
 		# Reduction Counter.
 		# We also count macro (and church) expansions,
 		# and subtract those from the final count.
@@ -119,10 +149,7 @@ class Runner:
 				print(f" Reducing... {i:,}", end = "\r")
 
 			try:
-				red_type, node = lamb.node.reduce(
-					node,
-					macro_table = self.macro_table
-				)
+				red_type, node = lamb.node.reduce(node)
 			except KeyboardInterrupt:
 				stop_reason = StopReason.INTERRUPT
 				break
@@ -138,13 +165,9 @@ class Runner:
 			if red_type == lamb.node.ReductionType.FUNCTION_APPLY:
 				macro_expansions += 1
 
-		# Expand all macros if we need to
-		if full_reduce:
-			m, node = lamb.node.force_expand_macros(
-				node,
-				macro_table = self.macro_table
-			)
-			macro_expansions += m
+		# Expand all remaining macros
+		m, node = lamb.node.finalize_macros(node, force = full_reduce)
+		macro_expansions += m
 
 		if i >= self.iter_update:
 			# Clear reduction counter
@@ -176,6 +199,9 @@ class Runner:
 				("class:text", str(node)), # type: ignore
 			]
 
+			self.history.append(lamb.node.finalize_macros(node, force = True)[1])
+
+
 		printf(
 			FormattedText(out_text),
 			style = lamb.utils.style
@@ -205,7 +231,7 @@ class Runner:
 			*,
 			silent = False
 		) -> None:
-		e = self.parse(line)
+		e, o = self.parse(line)
 
 		# If this line is a macro definition, save the macro.
 		if isinstance(e, MacroDef):
@@ -225,7 +251,7 @@ class Runner:
 
 		# If this line is a plain expression, reduce it.
 		elif isinstance(e, lamb.node.Node):
-			self.reduce(e)
+			self.reduce(e, status = o)
 
 		# We shouldn't ever get here.
 		else:

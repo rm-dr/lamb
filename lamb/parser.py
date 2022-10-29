@@ -16,13 +16,14 @@ class LambdaParser:
 		self.pp_bound = pp.Char(pp.srange("[a-z]"))
 		self.pp_name = self.pp_bound ^ self.pp_macro
 		self.pp_church = pp.Word(pp.nums)
+		self.pp_history = pp.Char("$")
 
 		# Function calls.
 		#
 		# <exp> <exp>
 		# <exp> <exp> <exp>
 		self.pp_call = pp.Forward()
-		self.pp_call <<= (self.pp_expr | self.pp_bound)[2, ...]
+		self.pp_call <<= (self.pp_expr | self.pp_bound | self.pp_history)[2, ...]
 
 		# Function definitions, right associative.
 		# Function args MUST be lowercase.
@@ -43,7 +44,7 @@ class LambdaParser:
 			pp.line_start() +
 			self.pp_macro +
 			pp.Suppress("=") +
-			(self.pp_expr ^ self.pp_call)
+			(self.pp_expr ^ self.pp_call ^ self.pp_history)
 		)
 
 		self.pp_expr <<= (
@@ -51,7 +52,8 @@ class LambdaParser:
 			self.pp_lambda_fun ^
 			self.pp_name ^
 			(self.lp + self.pp_expr + self.rp) ^
-			(self.lp + self.pp_call + self.rp)
+			(self.lp + self.pp_call + self.rp) ^
+			(self.lp + self.pp_history + self.rp)
 		)
 
 		self.pp_command = pp.Suppress(":") + pp.Word(pp.alphas + "_") + pp.Word(pp.alphas + pp.nums + "_")[0, ...]
@@ -61,7 +63,8 @@ class LambdaParser:
 			self.pp_expr ^
 			self.pp_macro_def ^
 			self.pp_command ^
-			self.pp_call
+			self.pp_call ^
+			self.pp_history
 		)
 
 	def __init__(
@@ -73,7 +76,8 @@ class LambdaParser:
 			action_func,
 			action_bound,
 			action_macro,
-			action_call
+			action_call,
+			action_history
 		):
 
 		self.make_parser()
@@ -85,6 +89,7 @@ class LambdaParser:
 		self.pp_macro.set_parse_action(action_macro)
 		self.pp_bound.set_parse_action(action_bound)
 		self.pp_call.set_parse_action(action_call)
+		self.pp_history.set_parse_action(action_history)
 
 	def parse_line(self, line: str):
 		return self.pp_all.parse_string(
