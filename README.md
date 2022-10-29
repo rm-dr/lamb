@@ -5,7 +5,6 @@
  - $\alpha$-equivalence check
  - Prettyprint functions (rename bound variables)
  - Write a nice README
- - Handle or avoid recursion errors
  - Fix colors
  - Print macro content if only a macro is typed
 

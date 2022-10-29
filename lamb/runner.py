@@ -4,6 +4,7 @@ from prompt_toolkit import print_formatted_text as printf
 from prompt_toolkit.shortcuts import clear as clear_screen
 import enum
 import math
+import time
 
 import lamb
 
@@ -105,6 +106,7 @@ class Runner:
 		macro_expansions = 0
 
 		stop_reason = StopReason.MAX_EXCEEDED
+		start_time = time.time()
 
 		while (self.reduction_limit is None) or (i < self.reduction_limit):
 
@@ -138,37 +140,30 @@ class Runner:
 			# Clear reduction counter
 			print(" " * round(14 + math.log10(i)), end = "\r")
 
-		if (
-				stop_reason == StopReason.BETA_NORMAL or
-				stop_reason == StopReason.LOOP_DETECTED
-			):
-			out_str = str(new_node) # type: ignore
+		out_text = [
+			("class:result_header", f"\nRuntime: "),
+			("class:text", f"{time.time() - start_time:.03f} seconds"),
 
-			printf(FormattedText([
-				("class:result_header", f"\nExit reason: "),
-				stop_reason.value,
+			("class:result_header", f"\nExit reason: "),
+			stop_reason.value,
 
-				("class:result_header", f"\nMacro expansions: "),
-				("class:text", str(macro_expansions)),
+			("class:result_header", f"\nMacro expansions: "),
+			("class:text", str(macro_expansions)),
 
-				("class:result_header", f"\nReductions: "),
-				("class:text", str(i)),
+			("class:result_header", f"\nReductions: "),
+			("class:text", str(i))
+		]
 
-
+		if (stop_reason == StopReason.BETA_NORMAL or stop_reason == StopReason.LOOP_DETECTED):
+			out_text += [
 				("class:result_header", "\n\n    => "),
-				("class:text", out_str),
-			]), style = lamb.utils.style)
-		else:
-			printf(FormattedText([
-				("class:result_header", f"\nExit reason: "),
-				stop_reason.value,
+				("class:text", str(new_node)), # type: ignore
+			]
 
-				("class:result_header", f"\nMacro expansions: "),
-				("class:text", str(macro_expansions)),
-
-				("class:result_header", f"\nReductions: "),
-				("class:text", str(i)),
-			]), style = lamb.utils.style)
+		printf(
+			FormattedText(out_text),
+			style = lamb.utils.style
+		)
 
 	def save_macro(
 			self,
