@@ -9,10 +9,9 @@
  - Print macro content if only a macro is typed
 
 ## Todo:
- - live syntax check
+ - History accessible in prompt
  - Command and macro autocomplete
  - step-by-step reduction
- - Maybe a better icon?
  - Syntax highlighting: parenthesis, bound variables, macros, etc
  - Pin header to top of screen
  - PyPi package
