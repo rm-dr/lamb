@@ -110,8 +110,17 @@ class Runner:
 
 	def reduce(self, node: lamb.node.Node, *, status = {}) -> None:
 
-		# Show warnings
 		warning_text = []
+
+		# Reduction Counter.
+		# We also count macro (and church) expansions,
+		# and subtract those from the final count.
+		k = 0
+		macro_expansions = 0
+
+		stop_reason = StopReason.MAX_EXCEEDED
+		start_time = time.time()
+		out_text = []
 
 		if status["has_history"] and len(self.history) != 0:
 			warning_text += [
@@ -121,32 +130,31 @@ class Runner:
 				("class:warn", "\n")
 			]
 
+		only_macro = isinstance(node, lamb.node.ExpandableEndNode)
+		if only_macro:
+			warning_text += [
+				("class:warn", "All macros will be expanded"),
+				("class:warn", "\n")
+			]
+			m, node = lamb.node.finalize_macros(node, force = True)
+			macro_expansions += m
+
+
 		for i in status["free_variables"]:
 			warning_text += [
-				("class:warn", "Macro "),
+				("class:warn", "Name "),
 				("class:code", i),
-				("class:warn", " will become a free variable.\n"),
+				("class:warn", " is a free variable\n"),
 			]
 
 		printf(FormattedText(warning_text), style = lamb.utils.style)
 
-		# Reduction Counter.
-		# We also count macro (and church) expansions,
-		# and subtract those from the final count.
-		i = 0
-		macro_expansions = 0
 
-		stop_reason = StopReason.MAX_EXCEEDED
-		start_time = time.time()
-		full_reduce = isinstance(node, lamb.node.ExpandableEndNode)
-		out_text = []
-
-
-		while (self.reduction_limit is None) or (i < self.reduction_limit):
+		while (self.reduction_limit is None) or (k < self.reduction_limit):
 
 			# Show reduction count
-			if (i >= self.iter_update) and (i % self.iter_update == 0):
-				print(f" Reducing... {i:,}", end = "\r")
+			if (k >= self.iter_update) and (k % self.iter_update == 0):
+				print(f" Reducing... {k:,}", end = "\r")
 
 			try:
 				red_type, node = lamb.node.reduce(node)
@@ -161,17 +169,17 @@ class Runner:
 				break
 
 			# Count reductions
-			i += 1
+			k += 1
 			if red_type == lamb.node.ReductionType.FUNCTION_APPLY:
 				macro_expansions += 1
 
 		# Expand all remaining macros
-		m, node = lamb.node.finalize_macros(node, force = full_reduce)
+		m, node = lamb.node.finalize_macros(node, force = only_macro)
 		macro_expansions += m
 
-		if i >= self.iter_update:
+		if k >= self.iter_update:
 			# Clear reduction counter
-			print(" " * round(14 + math.log10(i)), end = "\r")
+			print(" " * round(14 + math.log10(k)), end = "\r")
 
 		out_text += [
 			("class:result_header", f"Runtime: "),
@@ -184,14 +192,9 @@ class Runner:
 			("class:text", f"{macro_expansions:,}"),
 
 			("class:result_header", f"\nReductions: "),
-			("class:text", f"{i:,}\t"),
+			("class:text", f"{k:,}\t"),
 			("class:muted", f"(Limit: {self.reduction_limit:,})")
 		]
-
-		if full_reduce:
-			out_text += [
-				("class:warn", "\nAll macros have been expanded")
-			]
 
 		if (stop_reason == StopReason.BETA_NORMAL or stop_reason == StopReason.LOOP_DETECTED):
 			out_text += [

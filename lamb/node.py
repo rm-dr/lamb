@@ -244,6 +244,7 @@ class ExpandableEndNode(EndNode):
 
 class FreeVar(EndNode):
 	def __init__(self, name: str, *, runner = None):
+		super().__init__()
 		self.name = name
 		self.runner = runner # type: ignore
 

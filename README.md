@@ -75,15 +75,14 @@ Lamb treats each λ expression as a binary tree. Variable binding and reduction 
 
 
 ## Todo (pre-release):
- - Make command output accessible in prompt
  - Prettier colors
  - Prevent macro-chaining recursion
  - step-by-step reduction
  - Full-reduce option (expand all macros)
  - PyPi package
  - Cleanup warnings
+ - Preprocess method: bind, macros to free, etc
  - History queue
- - `W` isn't fully expanded. Why??
 
 
 ## Todo:
