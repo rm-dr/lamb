@@ -83,6 +83,7 @@ Lamb treats each λ expression as a binary tree. Variable binding and reduction 
  - Cleanup warnings
  - Preprocess method: bind, macros to free, etc
  - History queue
+ - Truncate long expressions in warnings
 
 
 ## Todo:
