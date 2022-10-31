@@ -136,8 +136,8 @@ class Runner:
 				("class:warn", "All macros will be expanded"),
 				("class:warn", "\n")
 			]
-			m, node = lamb.node.finalize_macros(node, force = True)
-			macro_expansions += m
+		m, node = lamb.node.expand(node, force_all = only_macro)
+		macro_expansions += m
 
 
 		for i in status["free_variables"]:
@@ -173,12 +173,8 @@ class Runner:
 			if red_type == lamb.node.ReductionType.FUNCTION_APPLY:
 				macro_expansions += 1
 
-		# Expand all remaining macros
-		m, node = lamb.node.finalize_macros(node, force = only_macro)
-		macro_expansions += m
-
 		if k >= self.iter_update:
-			# Clear reduction counter
+			# Clear reduction counter if it was printed
 			print(" " * round(14 + math.log10(k)), end = "\r")
 
 		out_text += [
@@ -202,7 +198,7 @@ class Runner:
 				("class:text", str(node)), # type: ignore
 			]
 
-			self.history.append(lamb.node.finalize_macros(node, force = True)[1])
+			self.history.append(lamb.node.expand(node, force_all = True)[1])
 
 
 		printf(
