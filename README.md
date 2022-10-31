@@ -83,6 +83,7 @@ Lamb treats each λ expression as a binary tree. Variable binding and reduction 
  - PyPi package
  - Cleanup warnings
  - History queue
+ - `W` isn't fully expanded. Why??
 
 
 ## Todo:
