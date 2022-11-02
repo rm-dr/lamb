@@ -23,9 +23,9 @@ Type lambda expressions into the prompt, and Lamb will evaluate them. \
 Use your `\` (backslash) key to type a `λ`. \
 To define macros, use `=`. For example,
 ```
-~~> T = λab.a
-~~> F = λab.a
-~~> NOT = λa.a F T
+==> T = λab.a
+==> F = λab.a
+==> NOT = λa.a F T
 ```
 
 Note that there are spaces in `λa.a F T`. With no spaces, `aFT` will be parsed as one variable. \
@@ -36,7 +36,7 @@ Be careful, macros are case-sensitive. If you define a macro `MAC` and accidenta
 
 Numbers will automatically be converted to Church numerals. For example, the following line will reduce to `T`.
 ```
-~~> 3 NOT F
+==> 3 NOT F
 ```
 
 If an expression takes too long to evaluate, you may interrupt reduction with `Ctrl-C`.
