@@ -235,7 +235,7 @@ class Runner:
 				("class:text", "Set "),
 				("class:code", macro.label),
 				("class:text", " to "),
-				("class:text", str(macro.expr))
+				("class:code", str(macro.expr))
 			]), style = lamb.utils.style)
 
 	# Apply a list of definitions
