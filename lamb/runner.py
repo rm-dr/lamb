@@ -13,6 +13,7 @@ class StopReason(enum.Enum):
 	LOOP_DETECTED	= ("class:warn", "Loop detected")
 	MAX_EXCEEDED	= ("class:err", "Too many reductions")
 	INTERRUPT		= ("class:warn", "User interrupt")
+	SHOW_MACRO		= ("class:text", "Displaying macro content")
 
 class MacroDef:
 	@staticmethod
@@ -31,11 +32,6 @@ class MacroDef:
 
 	def __str__(self):
 		return f"{self.label} := {self.expr}"
-
-	def bind_variables(self, *, ban_macro_name = None):
-		return self.expr.bind_variables(
-			ban_macro_name = ban_macro_name
-		)
 
 	def set_runner(self, runner):
 		return self.expr.set_runner(runner)
@@ -88,27 +84,30 @@ class Runner:
 		# so that all digits appear to be changing.
 		self.iter_update = 231
 
-		self.history = []
+		self.history: list[lamb.node.Root] = []
 
 	def prompt(self):
 		return self.prompt_session.prompt(
 			message = self.prompt_message
 		)
 
-	def parse(self, line) -> tuple[lamb.node.Node | MacroDef | Command, dict]:
+	def parse(self, line) -> tuple[lamb.node.Root | MacroDef | Command, dict]:
 		e = self.parser.parse_line(line)
 
 		o = {}
 		if isinstance(e, MacroDef):
+			e.expr = lamb.node.Root(e.expr)
 			e.set_runner(self)
-			o = e.bind_variables(ban_macro_name = e.label)
+			o = lamb.node.prepare(e.expr, ban_macro_name = e.label)
 		elif isinstance(e, lamb.node.Node):
+			e = lamb.node.Root(e)
 			e.set_runner(self)
-			o = e.bind_variables()
+			o = lamb.node.prepare(e)
+
 		return e, o
 
 
-	def reduce(self, node: lamb.node.Node, *, status = {}) -> None:
+	def reduce(self, node: lamb.node.Root, *, status = {}) -> None:
 
 		warning_text = []
 
@@ -130,12 +129,9 @@ class Runner:
 				("class:warn", "\n")
 			]
 
-		only_macro = isinstance(node, lamb.node.ExpandableEndNode)
+		only_macro = isinstance(node.left, lamb.node.Macro)
 		if only_macro:
-			warning_text += [
-				("class:warn", "All macros will be expanded"),
-				("class:warn", "\n")
-			]
+			stop_reason = StopReason.SHOW_MACRO
 		m, node = lamb.node.expand(node, force_all = only_macro)
 		macro_expansions += m
 
@@ -147,10 +143,16 @@ class Runner:
 				("class:warn", " is a free variable\n"),
 			]
 
-		printf(FormattedText(warning_text), style = lamb.utils.style)
+		if len(warning_text) != 0:
+			printf(FormattedText(warning_text), style = lamb.utils.style)
 
 
-		while (self.reduction_limit is None) or (k < self.reduction_limit):
+		while (
+				(
+					(self.reduction_limit is None) or
+					(k < self.reduction_limit)
+				) and not only_macro
+			):
 
 			# Show reduction count
 			if (k >= self.iter_update) and (k % self.iter_update == 0):
@@ -177,22 +179,32 @@ class Runner:
 			# Clear reduction counter if it was printed
 			print(" " * round(14 + math.log10(k)), end = "\r")
 
-		out_text += [
-			("class:result_header", f"Runtime: "),
-			("class:text", f"{time.time() - start_time:.03f} seconds"),
+		if only_macro:
+			out_text += [
+				("class:result_header", f"Displaying macro content")
+			]
 
-			("class:result_header", f"\nExit reason: "),
-			stop_reason.value,
+		else:
+			out_text += [
+				("class:result_header", f"Runtime: "),
+				("class:text", f"{time.time() - start_time:.03f} seconds"),
 
-			("class:result_header", f"\nMacro expansions: "),
-			("class:text", f"{macro_expansions:,}"),
+				("class:result_header", f"\nExit reason: "),
+				stop_reason.value,
 
-			("class:result_header", f"\nReductions: "),
-			("class:text", f"{k:,}\t"),
-			("class:muted", f"(Limit: {self.reduction_limit:,})")
-		]
+				("class:result_header", f"\nMacro expansions: "),
+				("class:text", f"{macro_expansions:,}"),
 
-		if (stop_reason == StopReason.BETA_NORMAL or stop_reason == StopReason.LOOP_DETECTED):
+				("class:result_header", f"\nReductions: "),
+				("class:text", f"{k:,}\t"),
+				("class:muted", f"(Limit: {self.reduction_limit:,})")
+			]
+
+		if (
+				stop_reason == StopReason.BETA_NORMAL or
+				stop_reason == StopReason.LOOP_DETECTED or
+				only_macro
+		):
 			out_text += [
 				("class:result_header", "\n\n    => "),
 				("class:text", str(node)), # type: ignore

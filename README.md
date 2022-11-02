@@ -76,20 +76,21 @@ Lamb treats each λ expression as a binary tree. Variable binding and reduction 
 
 ## Todo (pre-release):
  - Prettier colors
- - Prevent macro-chaining recursion
- - step-by-step reduction
- - Full-reduce option (expand all macros)
- - PyPi package
  - Cleanup warnings
- - Preprocess method: bind, macros to free, etc
- - History queue
  - Truncate long expressions in warnings
+ - Prevent macro-chaining recursion
+ - Full-reduce option (expand all macros)
+ - step-by-step reduction
+ - Cleanup files
+ - PyPi package
 
 
 ## Todo:
+ - History queue + command indexing
+ - Show history command
  - Better class mutation: when is a node no longer valid?
  - Loop detection
- - Command-line options (load a file, run a set of commands)
  - $\alpha$-equivalence check
+ - Command-line options (load a file, run a set of commands)
  - Unchurch macro: make church numerals human-readable
  - Syntax highlighting: parenthesis, bound variables, macros, etc
