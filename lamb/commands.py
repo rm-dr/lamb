@@ -103,7 +103,7 @@ def cmd_load(command, runner):
 	for i in range(len(lines)):
 		l = lines[i]
 		try:
-			x = runner.parse(l)
+			x = runner.parse(l)[0]
 		except ppx.ParseException as e:
 			printf(
 				FormattedText([

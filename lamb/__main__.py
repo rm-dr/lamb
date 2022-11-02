@@ -36,7 +36,7 @@ r = lamb.Runner(
 		key_bindings = bindings
 	),
 	prompt_message = FormattedText([
-		("class:prompt", "~~> ")
+		("class:prompt", "==> ")
 	])
 )
 

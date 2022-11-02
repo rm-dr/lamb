@@ -129,7 +129,10 @@ class Runner:
 				("class:warn", "\n")
 			]
 
-		only_macro = isinstance(node.left, lamb.node.Macro)
+		only_macro = (
+			isinstance(node.left, lamb.node.Macro) or
+			isinstance(node.left, lamb.node.Church)
+		)
 		if only_macro:
 			stop_reason = StopReason.SHOW_MACRO
 		m, node = lamb.node.expand(node, force_all = only_macro)
@@ -181,21 +184,21 @@ class Runner:
 
 		if only_macro:
 			out_text += [
-				("class:result_header", f"Displaying macro content")
+				("class:ok", f"Displaying macro content")
 			]
 
 		else:
 			out_text += [
-				("class:result_header", f"Runtime: "),
+				("class:ok", f"Runtime: "),
 				("class:text", f"{time.time() - start_time:.03f} seconds"),
 
-				("class:result_header", f"\nExit reason: "),
+				("class:ok", f"\nExit reason: "),
 				stop_reason.value,
 
-				("class:result_header", f"\nMacro expansions: "),
+				("class:ok", f"\nMacro expansions: "),
 				("class:text", f"{macro_expansions:,}"),
 
-				("class:result_header", f"\nReductions: "),
+				("class:ok", f"\nReductions: "),
 				("class:text", f"{k:,}\t"),
 				("class:muted", f"(Limit: {self.reduction_limit:,})")
 			]
@@ -206,7 +209,7 @@ class Runner:
 				only_macro
 		):
 			out_text += [
-				("class:result_header", "\n\n    => "),
+				("class:ok", "\n\n    => "),
 				("class:text", str(node)), # type: ignore
 			]
 
@@ -230,7 +233,7 @@ class Runner:
 		if not silent:
 			printf(FormattedText([
 				("class:text", "Set "),
-				("class:syn_macro", macro.label),
+				("class:code", macro.label),
 				("class:text", " to "),
 				("class:text", str(macro.expr))
 			]), style = lamb.utils.style)
