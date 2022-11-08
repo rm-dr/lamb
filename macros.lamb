@@ -1,0 +1,77 @@
+# How to use exported files in lamb:
+#
+# [Syntax Highlighting]
+#	Most languages' syntax highlighters will
+#	highlight this code well. Set it manually
+#	in your editor.
+#
+#	Don't use a language for which you have a
+#	linter installed, you'll get lots of errors.
+#
+#	Choose a language you don't have extenstions for,
+#	and a language that uses # comments.
+#
+# The following worked well in vscode:
+# - Julia
+# - Perl
+# - Coffeescript
+# - R
+
+# [Writing macros]
+#	If you don't have a custom keyboard layout that can
+#	create λs, you may use backslashes instead.
+#	(As in `T = \ab.b`)
+#
+#	This file must only contain macro definitons. Commands will be ignored.
+#	Statements CANNOT be split among multiple lines.
+#	Comments CANNOT be on the same line as macro defintions.
+#	All leading whitespace is ignored.
+
+
+# Misc Combinators
+M = λx.(x x)
+W = (M M)
+Y = λf.((λx.(f (x x))) (λx.(f (x x))))
+
+
+# Booleans
+T = λab.a
+F = λab.b
+NOT = λa.(a F T)
+AND = λab.(a b F)
+OR = λab.(a T b)
+XOR = λab.((a (NOT b)) b)
+
+
+# Numbers
+# PAIR: prerequisite for H.
+#	Makes a two-value tuple, indexed with T and F.
+#
+# H: shift-and-add, prerequisite for D
+#
+# S: successor (adds 1)
+#
+# D: predecessor (subtracts 1)
+#
+# Z: tests if a number is zero
+# NZ: equivalent to `NOT Z`
+#
+# ADD: adds two numbers
+#
+# MULT: multiply two numbers
+#
+# FAC:
+#	Recursive factorial. Call with `Y FAC <number>`
+#	Don't call this with numbers bigger than 5 unless you're very patient.
+#
+#	`Y FAC 6` required 867,920 reductions and took 10 minutes to run.
+
+PAIR = λabi.(i a b)
+H = λp.((PAIR (p F)) (S (p F)))
+S = λnfa.(f (n f a))
+D = λn.((n H) ((PAIR 0) 0) T)
+Z = λn.(n (λa.F) T)
+NZ = λn.(n (λa.T) F)
+ADD = λmn.(m S n)
+MULT = λnmf.(n (m f))
+FAC = λyn.( (Z n)(1)((MULT n) (y (D n))) )

@@ -1,65 +1,28 @@
+if __name__ != "__main__":
+	raise ImportError("lamb.__main__ should never be imported. Run it directly.")
+
 from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit import print_formatted_text as printf
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.formatted_text import to_plain_text
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.lexers import Lexer
 from pyparsing import exceptions as ppx
 
 import lamb
 
 
-# Simple lexer for highlighting.
-# Improve this later.
-class LambdaLexer(Lexer):
-	def lex_document(self, document):
-		def inner(line_no):
-			return [("class:text", str(document.lines[line_no]))]
-		return inner
-
-
 lamb.utils.show_greeting()
-
-
-# Replace "\" with pretty "λ"s
-bindings = KeyBindings()
-@bindings.add("\\")
-def _(event):
-	event.current_buffer.insert_text("λ")
 
 
 r = lamb.Runner(
 	prompt_session = PromptSession(
 		style = lamb.utils.style,
-		lexer = LambdaLexer(),
-		key_bindings = bindings
+		lexer = lamb.utils.LambdaLexer(),
+		key_bindings = lamb.utils.bindings
 	),
 	prompt_message = FormattedText([
 		("class:prompt", "==> ")
 	])
 )
-
-
-r.run_lines([
-	"T = λab.a",
-	"F = λab.b",
-	"NOT = λa.(a F T)",
-	"AND = λab.(a b F)",
-	"OR = λab.(a T b)",
-	"XOR = λab.(a (NOT b) b)",
-	"M = λx.(x x)",
-	"W = M M",
-	"Y = λf.( (λx.(f (x x))) (λx.(f (x x))) )",
-	"PAIR = λabi.( i a b )",
-	"S = λnfa.(f (n f a))",
-	"Z = λn.n (λa.F) T",
-	"MULT = λnmf.n (m f)",
-	"H = λp.((PAIR (p F)) (S (p F)))",
-	"D = λn.n H (PAIR 0 0) T",
-	"FAC = λyn.(Z n)(1)(MULT n (y (D n)))"
-])
-
 
 while True:
 	try:

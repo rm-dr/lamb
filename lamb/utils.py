@@ -1,5 +1,7 @@
 from prompt_toolkit.styles import Style
 from prompt_toolkit.formatted_text import HTML
+from prompt_toolkit.lexers import Lexer
+from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit import print_formatted_text as printf
 from importlib.metadata import version
 
@@ -14,6 +16,11 @@ style = Style.from_dict({ # type: ignore
 	"code": "#AAAAAA italic",
 	"muted": "#AAAAAA",
 
+	# Syntax highlighting colors
+	"syn_cmd": "#FFFFFF italic",
+	"syn_lambda": "#AAAAAA",
+	"syn_paren": "#AAAAAA",
+
 	# Command formatting
 	# cmd_h:    section titles
 	# cmd_key:  keyboard keys, usually one character
@@ -26,6 +33,46 @@ style = Style.from_dict({ # type: ignore
 	"_s": "#00EF7C bold",
 	"_p": "#AAAAAA"
 })
+
+
+# Replace "\" with pretty "λ"s
+bindings = KeyBindings()
+@bindings.add("\\")
+def _(event):
+	event.current_buffer.insert_text("λ")
+
+# Simple lexer for highlighting.
+# Improve this later.
+class LambdaLexer(Lexer):
+	def lex_document(self, document):
+		def inner(line_no):
+			out = []
+			tmp_str = []
+			d = str(document.lines[line_no])
+
+			if d.startswith(":"):
+				return [
+					("class:syn_cmd", d)
+				]
+
+			for c in d:
+				if c in "\\λ.":
+					if len(tmp_str) != 0:
+						out.append(("class:text", "".join(tmp_str)))
+					out.append(("class:syn_lambda", c))
+					tmp_str = []
+				elif c in "()":
+					if len(tmp_str) != 0:
+						out.append(("class:text", "".join(tmp_str)))
+					out.append(("class:syn_paren", c))
+					tmp_str = []
+				else:
+					tmp_str.append(c)
+
+			if len(tmp_str) != 0:
+				out.append(("class:text", "".join(tmp_str)))
+			return out
+		return inner
 
 
 def show_greeting():

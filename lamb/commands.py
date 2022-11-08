@@ -101,7 +101,14 @@ def cmd_load(command, runner):
 		lines = [x.strip() for x in f.readlines()]
 
 	for i in range(len(lines)):
-		l = lines[i]
+		l = lines[i].strip()
+
+		# Skip comments and empty lines
+		if l.startswith("#"):
+			continue
+		if l == "":
+			continue
+
 		try:
 			x = runner.parse(l)[0]
 		except ppx.ParseException as e:

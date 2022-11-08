@@ -19,6 +19,7 @@
 
 ## Usage
 
+
 Type lambda expressions into the prompt, and Lamb will evaluate them. \
 Use your `\` (backslash) key to type a `λ`. \
 To define macros, use `=`. For example,
@@ -30,22 +31,30 @@ To define macros, use `=`. For example,
 
 Note that there are spaces in `λa.a F T`. With no spaces, `aFT` will be parsed as one variable. \
 Lambda functions can only take single-letter, lowercase arguments. `λA.A` is not valid syntax. \
-Unbound variables (upper and lower case) that aren't macros will become free variables. Free variables will be shown with a `'`, like `a'`.
+Free variables will be shown with a `'`, like `a'`.
 
-Be careful, macros are case-sensitive. If you define a macro `MAC` and accidentally write `mac` in the prompt, `mac` will become a free variable.
+Macros are case-sensitive. If you define a macro `MAC` and accidentally write `mac` in the prompt, `mac` will become a free variable.
 
 Numbers will automatically be converted to Church numerals. For example, the following line will reduce to `T`.
 ```
 ==> 3 NOT F
 ```
 
-If an expression takes too long to evaluate, you may interrupt reduction with `Ctrl-C`.
+If an expression takes too long to evaluate, you may interrupt reduction with `Ctrl-C`. \
+Exit the prompt with `Ctrl-C` or `Ctrl-D`.
+
+There are many useful macros in [macros.lamb](./macros.lamb). Load them with the `:load` command:
+```
+==> :load macros.lamb
+```
+
+Have fun!
 
 -------------------------------------------------
 
 ## Commands
 
-Lamb comes with a few commands. Prefix them with a `:`
+Lamb understands many commands. Prefix them with a `:` in the prompt.
 
 `:help` Prints a help message
 
@@ -59,8 +68,10 @@ Lamb comes with a few commands. Prefix them with a `:`
 
 `:clearmacros` Delete all macros
 
-`:save [filename]`\
-`:load [filename]` Save or load the current environment to a file. The lines in a file look exactly the same as regular entries in the prompt, but must only contain macro definitions.
+`:save [filename]` \
+`:load [filename]` \
+Save or load macros from a file.
+The lines in a file look exactly the same as regular entries in the prompt, but can only contain macro definitions. See [macros.lamb](./macros.lamb) for an example.
 
 -------------------------------------------------
 
