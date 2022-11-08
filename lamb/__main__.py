@@ -52,7 +52,7 @@ while True:
 			("class:text", "\n")
 		]), style = lamb.utils.style)
 		continue
-	except lamb.node.ReductionError as e:
+	except lamb.nodes.ReductionError as e:
 		printf(FormattedText([
 			("class:err", f"{e.msg}\n")
 		]), style = lamb.utils.style)

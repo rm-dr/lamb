@@ -123,7 +123,7 @@ def cmd_load(command, runner):
 			)
 			return
 
-		if not isinstance(x, lamb.runner.MacroDef):
+		if not isinstance(x, lamb.runner.runner.MacroDef):
 			printf(
 				FormattedText([
 					("class:warn", f"Skipping line {i+1:02}: "),

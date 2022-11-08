@@ -93,7 +93,6 @@ Lamb treats each λ expression as a binary tree. Variable binding and reduction 
  - Prevent macro-chaining recursion
  - Full-reduce option (expand all macros)
  - step-by-step reduction
- - Cleanup files
  - Update screenshot
  - Update documentation & "internals" section.
  - PyPi package
