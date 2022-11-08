@@ -494,12 +494,18 @@ def print_node(node: Node, *, export: bool = False) -> str:
 
 		elif isinstance(n, Func):
 			if s == Direction.UP:
+				if isinstance(n.parent, Call):
+					out += "("
+
 				if isinstance(n.parent, Func):
 					out += n.input.name
 				else:
 					out += "λ" + n.input.name
 				if not isinstance(n.left, Func):
 					out += "."
+			elif s == Direction.LEFT:
+				if isinstance(n.parent, Call):
+					out += ")"
 
 		elif isinstance(n, Call):
 			if s == Direction.UP:

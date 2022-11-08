@@ -163,20 +163,49 @@ def mdel(command, runner) -> None:
 
 	del runner.macro_table[target]
 
+@lamb_command(
+	help_text = "Delete all macros"
+)
+def clearmacros(command, runner) -> None:
+	confirm = runner.prompt_session.prompt(
+		message = FormattedText([
+			("class:warn", "Are you sure? "),
+			("class:text", "[yes/no]: ")
+		])
+	).lower()
+
+	if confirm != "yes":
+		printf(
+			HTML(
+				"<err>Cancelled.</err>"
+			),
+			style = lamb.utils.style
+		)
+		return
+
+	runner.macro_table = {}
+
 
 @lamb_command(
 	help_text = "Show macros"
 )
 def macros(command, runner) -> None:
-	printf(FormattedText([
-			("class:cmd_h", "\nDefined Macros:\n"),
-		] +
-		[
-			("class:text", f"\t{name} \t {exp}\n")
-			for name, exp in runner.macro_table.items()
-		]),
-		style = lamb.utils.style
-	)
+	if len(runner.macro_table) == 0:
+		printf(FormattedText([
+				("class:warn", "No macros are defined."),
+			]),
+			style = lamb.utils.style
+		)
+	else:
+		printf(FormattedText([
+				("class:cmd_h", "\nDefined Macros:\n"),
+			] +
+			[
+				("class:text", f"\t{name} \t {exp}\n")
+				for name, exp in runner.macro_table.items()
+			]),
+			style = lamb.utils.style
+		)
 
 @lamb_command(
 	help_text = "Clear the screen"

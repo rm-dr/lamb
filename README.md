@@ -57,6 +57,8 @@ Lamb comes with a few commands. Prefix them with a `:`
 
 `:mdel [macro]` Delete a macro
 
+`:clearmacros` Delete all macros
+
 `:save [filename]`\
 `:load [filename]` Save or load the current environment to a file. The lines in a file look exactly the same as regular entries in the prompt, but must only contain macro definitions.
 
@@ -75,7 +77,6 @@ Lamb treats each λ expression as a binary tree. Variable binding and reduction 
 
 
 ## Todo (pre-release, in this order):
- - Fix :save
  - Cleanup warnings
  - Truncate long expressions in warnings
  - Prevent macro-chaining recursion
