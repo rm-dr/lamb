@@ -75,17 +75,6 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 
 -------------------------------------------------
 
-## Internals
-
-Lamb treats each λ expression as a binary tree. Variable binding and reduction are all simple operations on that tree. All this magic happens in [`nodes.py`](./lamb/nodes.py).
-
-**Highlights:**
- - `TreeWalker` is the iterator we (usually) use to traverse our tree. It walks the "perimeter" of the tree, visiting some nodes multiple times.
- - `Node` is the base class for all nodes. Any node has `.left` and `.right` elements, which may be `None` (empty). `Node`s also reference their parent and their direction relative to their parent, to make tree traversal easy.
- - Before any reduction is done, variables are bound via `bind_variables`. This prevents accidental conflicts common in many lambda parsers.
-
--------------------------------------------------
-
 
 ## Todo (pre-release, in this order):
  - Cleanup warnings
@@ -94,17 +83,18 @@ Lamb treats each λ expression as a binary tree. Variable binding and reduction 
  - Full-reduce option (expand all macros)
  - step-by-step reduction
  - Update screenshot
- - Update documentation & "internals" section.
+ - Update documentation
+ - Write "how it works"
  - PyPi package
 
 
 ## Todo:
- - History queue + command indexing
+ - History queue + indexing
  - Show history command
- - Better class mutation: when is a node no longer valid?
  - Loop detection
  - $\alpha$-equivalence check
- - Command-line options (load a file, run a set of commands)
- - Unchurch macro: make church numerals human-readable
- - Syntax highlighting: parenthesis, bound variables, macros, etc
+ - Command-line options (load a file)
+ - Unchurch command: make church numerals human-readable
+ - Better Syntax highlighting
+ - Syntax highlight printouts
  - Tests
