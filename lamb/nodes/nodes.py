@@ -333,10 +333,15 @@ class History(ExpandableEndNode):
 
 bound_counter = 0
 class Bound(EndNode):
-	def __init__(self, name: str, *, forced_id = None, runner = None):
+	def __init__(self, name: str, *, forced_id = None, runner = None, macro_name = None):
 		self.name = name
 		global bound_counter
 		self.runner = runner # type: ignore
+
+		# The name of the macro this bound came from.
+		# Always equal to self.name, unless the macro
+		# this came from had a subscript.
+		self.macro_name: str | None = macro_name
 
 		if forced_id is None:
 			self.identifier = bound_counter

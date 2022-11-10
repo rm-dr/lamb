@@ -13,7 +13,7 @@ class LambdaParser:
 		# We still create macro objects from them, they are turned into
 		# bound variables after the expression is built.
 		self.pp_macro = pp.Word(pp.alphas + "_")
-		self.pp_bound = pp.Char(pp.srange("[a-z]"))
+		self.pp_bound = pp.Regex("[a-z][₀₁₂₃₄₅₆₈₉]*")
 		self.pp_name = self.pp_bound ^ self.pp_macro
 		self.pp_church = pp.Word(pp.nums)
 		self.pp_history = pp.Char("$")

@@ -5,6 +5,8 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit import print_formatted_text as printf
 from importlib.metadata import version
 
+import re
+
 
 style = Style.from_dict({ # type: ignore
 	# Basic formatting
@@ -108,6 +110,9 @@ def show_greeting():
 		""
 	])), style = style)
 
+def remove_sub(s: str):
+	return re.sub("[₀₁₂₃₄₅₆₈₉]*", "", s)
+
 def base4(n: int):
 	if n == 0:
 		return [0]
@@ -119,9 +124,9 @@ def base4(n: int):
 
 def subscript(num: int):
 
-	# unicode subscripts  ₀₁₂₃
-	# usually look different than
-	# the rest, so we'll use base 4.
+	# unicode subscripts  ₀₁₂₃ and ₄₅₆₈₉
+	# usually look different,
+	# so we'll use base 4.
 	qb = base4(num)
 
 	sub = {

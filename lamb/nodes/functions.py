@@ -166,11 +166,14 @@ def prepare(root: lbn.Root, *, ban_macro_name = None) -> list:
 				if (n.input.name in bound_variables):
 					raise lbn.ReductionError(f"Bound variable name conflict: \"{n.input.name}\"")
 				else:
-					bound_variables[n.input.name] = lbn.Bound(n.input.name)
+					bound_variables[n.input.name] = lbn.Bound(
+						lamb.utils.remove_sub(n.input.name),
+						macro_name = n.input.name
+					)
 					n.input = bound_variables[n.input.name]
 
 			elif s == lbn.Direction.LEFT:
-				del bound_variables[n.input.name]
+				del bound_variables[n.input.macro_name] # type: ignore
 
 	return warnings
 
