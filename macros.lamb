@@ -31,7 +31,7 @@
 # Misc Combinators
 M = λx.(x x)
 W = (M M)
-Y = λf.((λx.(f (x x))) (λx.(f (x x))))
+Y = λf.( (λx.(f (x x))) (λx.(f (x x))) )
 
 
 # Booleans
@@ -67,11 +67,11 @@ XOR = λab.((a (NOT b)) b)
 #	`Y FAC 6` required 867,920 reductions and took 10 minutes to run.
 
 PAIR = λabi.(i a b)
-H = λp.((PAIR (p F)) (S (p F)))
 S = λnfa.(f (n f a))
-D = λn.((n H) ((PAIR 0) 0) T)
+H = λp.((PAIR (p F)) (S (p F)))
+D = λn.(n H (PAIR 0 0) T)
 Z = λn.(n (λa.F) T)
 NZ = λn.(n (λa.T) F)
 ADD = λmn.(m S n)
 MULT = λnmf.(n (m f))
-FAC = λyn.( (Z n)(1)((MULT n) (y (D n))) )
+FAC = λyn.(Z n) (1) (MULT n (y (D n)))
