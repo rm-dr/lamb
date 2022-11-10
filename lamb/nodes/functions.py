@@ -95,7 +95,7 @@ def clone(node: lbn.Node):
 			break
 	return out
 
-def prepare(root: lbn.Root, *, ban_macro_name = None) -> dict:
+def prepare(root: lbn.Root, *, ban_macro_name = None) -> list:
 	"""
 	Prepare an expression for expansion.
 	This will does the following:
@@ -109,15 +109,19 @@ def prepare(root: lbn.Root, *, ban_macro_name = None) -> dict:
 
 	bound_variables = {}
 
-	output = {
-		"has_history": False,
-		"free_variables": set()
-	}
+	warnings = []
 
 	it = iter(root)
 	for s, n in it:
 		if isinstance(n, lbn.History):
-			output["has_history"] = True
+			if len(root.runner.history) == 0:
+				raise lbn.ReductionError("There isn't any history to reference.")
+			else:
+				warnings += [
+					("class:code", "$"),
+					("class:warn", " will be expanded to "),
+					("class:code", f"{n.expand()[1]}\n"),
+				]
 
 		# If this expression is part of a macro,
 		# make sure we don't reference it inside itself.
@@ -135,7 +139,11 @@ def prepare(root: lbn.Root, *, ban_macro_name = None) -> dict:
 
 			# Turn undefined macros into free variables
 			elif n.name not in root.runner.macro_table:
-				output["free_variables"].add(n.name)
+				warnings += [
+					("class:warn", "Name "),
+					("class:code", n.name),
+					("class:warn", " is a free variable\n"),
+				]
 				n.parent.set_side(
 					n.parent_side,
 					n.to_freevar()
@@ -158,7 +166,7 @@ def prepare(root: lbn.Root, *, ban_macro_name = None) -> dict:
 			elif s == lbn.Direction.LEFT:
 				del bound_variables[n.input.name]
 
-	return output
+	return warnings
 
 # Apply a function.
 # Returns the function's output.

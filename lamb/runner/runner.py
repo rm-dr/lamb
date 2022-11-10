@@ -56,25 +56,23 @@ class Runner:
 			message = self.prompt_message
 		)
 
-	def parse(self, line) -> tuple[lamb.nodes.Root | MacroDef | Command, dict]:
+	def parse(self, line) -> tuple[lamb.nodes.Root | MacroDef | Command, list]:
 		e = self.parser.parse_line(line)
 
-		o = {}
+		w = []
 		if isinstance(e, MacroDef):
 			e.expr = lamb.nodes.Root(e.expr)
 			e.set_runner(self)
-			o = lamb.nodes.prepare(e.expr, ban_macro_name = e.label)
+			w = lamb.nodes.prepare(e.expr, ban_macro_name = e.label)
 		elif isinstance(e, lamb.nodes.Node):
 			e = lamb.nodes.Root(e)
 			e.set_runner(self)
-			o = lamb.nodes.prepare(e)
+			w = lamb.nodes.prepare(e)
 
-		return e, o
+		return e, w
 
 
-	def reduce(self, node: lamb.nodes.Root, *, status = {}) -> None:
-
-		warning_text = []
+	def reduce(self, node: lamb.nodes.Root, *, warnings = []) -> None:
 
 		# Reduction Counter.
 		# We also count macro (and church) expansions,
@@ -86,14 +84,6 @@ class Runner:
 		start_time = time.time()
 		out_text = []
 
-		if status["has_history"] and len(self.history) != 0:
-			warning_text += [
-				("class:code", "$"),
-				("class:warn", " will be expanded to "),
-				("class:code", str(self.history[-1])),
-				("class:warn", "\n")
-			]
-
 		only_macro = (
 			isinstance(node.left, lamb.nodes.Macro) or
 			isinstance(node.left, lamb.nodes.Church)
@@ -103,16 +93,8 @@ class Runner:
 		m, node = lamb.nodes.expand(node, force_all = only_macro)
 		macro_expansions += m
 
-
-		for i in status["free_variables"]:
-			warning_text += [
-				("class:warn", "Name "),
-				("class:code", i),
-				("class:warn", " is a free variable\n"),
-			]
-
-		if len(warning_text) != 0:
-			printf(FormattedText(warning_text), style = lamb.utils.style)
+		if len(warnings) != 0:
+			printf(FormattedText(warnings), style = lamb.utils.style)
 
 
 		while (
@@ -210,7 +192,7 @@ class Runner:
 			*,
 			silent = False
 		) -> None:
-		e, o = self.parse(line)
+		e, w = self.parse(line)
 
 		# If this line is a macro definition, save the macro.
 		if isinstance(e, MacroDef):
@@ -230,7 +212,7 @@ class Runner:
 
 		# If this line is a plain expression, reduce it.
 		elif isinstance(e, lamb.nodes.Node):
-			self.reduce(e, status = o)
+			self.reduce(e, warnings = w)
 
 		# We shouldn't ever get here.
 		else:

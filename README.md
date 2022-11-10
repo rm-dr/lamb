@@ -77,7 +77,6 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 
 
 ## Todo (pre-release, in this order):
- - Cleanup warnings
  - Truncate long expressions in warnings
  - Prevent macro-chaining recursion
  - Full-reduce option (expand all macros)
@@ -89,6 +88,8 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 
 
 ## Todo:
+ - Cleanup warnings
+ - Syntax highlight printouts
  - History queue + indexing
  - Show history command
  - Loop detection
@@ -97,6 +98,5 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
  - Command-line options (load a file)
  - Unchurch command: make church numerals human-readable
  - Better Syntax highlighting
- - Syntax highlight printouts
  - Complete file names and commands
  - Tests

@@ -319,8 +319,10 @@ class History(ExpandableEndNode):
 		return "$"
 
 	def expand(self) -> tuple[lbn.ReductionType, Node]:
+		# We shouldn't ever get here, prepare()
+		# catches empty history.
 		if len(self.runner.history) == 0:
-			raise lbn.ReductionError(f"There isn't any history to reference.")
+			raise Exception(f"Tried to expand empty history.")
 		# .left is VERY important!
 		# self.runner.history will contain Root nodes,
 		# and we don't want those *inside* our tree.
