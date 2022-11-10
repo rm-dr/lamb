@@ -108,7 +108,22 @@ def show_greeting():
 		""
 	])), style = style)
 
+def base4(n: int):
+	if n == 0:
+		return [0]
+	digits = []
+	while n:
+		digits.append(n % 4)
+		n //= 4
+	return digits[::-1]
+
 def subscript(num: int):
+
+	# unicode subscripts  ₀₁₂₃
+	# usually look different than
+	# the rest, so we'll use base 4.
+	qb = base4(num)
+
 	sub = {
 		"0": "₀",
 		"1": "₁",
@@ -136,5 +151,5 @@ def subscript(num: int):
 	}
 
 	return "".join(
-		[sup[x] for x in str(num)]
+		[sub[str(x)] for x in qb]
 	)

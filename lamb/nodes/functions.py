@@ -12,35 +12,41 @@ def print_node(node: lbn.Node, *, export: bool = False) -> str:
 	for s, n in node:
 		if isinstance(n, lbn.EndNode):
 			if isinstance(n, lbn.Bound):
-				if n.identifier not in bound_subs.keys():
-					o = n.print_value(export = export)
-					if o in bound_subs.items():
-						i = 1
-						while o in bound_subs.items():
-							o = lamb.utils.subscript(i := i + 1)
-						bound_subs[n.identifier] = o
-					else:
-						bound_subs[n.identifier] = n.print_value()
-
-
 				out += bound_subs[n.identifier]
 			else:
 				out += n.print_value(export = export)
 
 		elif isinstance(n, lbn.Func):
+			# This should never be true, but
+			# keep this here to silence type checker.
+			if not isinstance(n.input, lbn.Bound):
+				raise Exception("input is macro, something is wrong.")
+
 			if s == lbn.Direction.UP:
+				o = n.input.print_value(export = export)
+				if o in bound_subs.values():
+					i = -1
+					p = o
+					while o in bound_subs.values():
+						o = p + lamb.utils.subscript(i := i + 1)
+					bound_subs[n.input.identifier] = o
+				else:
+					bound_subs[n.input.identifier] = n.input.print_value()
+
 				if isinstance(n.parent, lbn.Call):
 					out += "("
 
 				if isinstance(n.parent, lbn.Func):
-					out += n.input.name
+					out += bound_subs[n.input.identifier]
 				else:
-					out += "λ" + n.input.name
+					out += "λ" + bound_subs[n.input.identifier]
 				if not isinstance(n.left, lbn.Func):
 					out += "."
+
 			elif s == lbn.Direction.LEFT:
 				if isinstance(n.parent, lbn.Call):
 					out += ")"
+				del bound_subs[n.input.identifier]
 
 		elif isinstance(n, lbn.Call):
 			if s == lbn.Direction.UP:

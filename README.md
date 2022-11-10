@@ -77,7 +77,7 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 
 
 ## Todo (pre-release, in this order):
- - Fix unique bound variable printer
+ - Export will break with :save, fix it.
  - Prevent macro-chaining recursion
  - Full-reduce option (expand all macros)
  - step-by-step reduction
