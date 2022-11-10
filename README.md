@@ -77,7 +77,7 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 
 
 ## Todo (pre-release, in this order):
- - Truncate long expressions in warnings
+ - Fix unique bound variable printer
  - Prevent macro-chaining recursion
  - Full-reduce option (expand all macros)
  - step-by-step reduction
@@ -90,6 +90,7 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 ## Todo:
  - Cleanup warnings
  - Syntax highlight printouts
+ - Truncate long expressions in warnings
  - History queue + indexing
  - Show history command
  - Loop detection
