@@ -92,9 +92,11 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
  - History queue + indexing
  - Show history command
  - Loop detection
+ - Optimization: reduction can be slow with large trees.
  - $\alpha$-equivalence check
  - Command-line options (load a file)
  - Unchurch command: make church numerals human-readable
  - Better Syntax highlighting
  - Syntax highlight printouts
+ - Complete file names and commands
  - Tests
