@@ -79,7 +79,6 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 ## Todo (pre-release, in this order):
  - Prevent macro-chaining recursion
  - Full-reduce option (expand all macros)
- - step-by-step reduction
  - Update screenshot
  - Update documentation
  - Write "how it works"

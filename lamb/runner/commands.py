@@ -2,6 +2,7 @@ from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit import print_formatted_text as printf
 from prompt_toolkit.shortcuts import clear as clear_screen
+from prompt_toolkit import prompt
 
 import os.path
 from pyparsing import exceptions as ppx
@@ -27,6 +28,53 @@ def lamb_command(
 		help_texts[name] = help_text
 	return inner
 
+@lamb_command(
+	command_name = "step",
+	help_text = "Toggle step-by-step reduction"
+)
+def cmd_step(command, runner) -> None:
+	if len(command.args) > 1:
+		printf(
+			HTML(
+				f"<err>Command <code>:{command.name}</code> takes no more than one argument.</err>"
+			),
+			style = lamb.utils.style
+		)
+		return
+
+	target = not runner.step_reduction
+	if len(command.args) == 1:
+		if command.args[0].lower() in ("y", "yes"):
+			target = True
+		elif command.args[0].lower() in ("n", "no"):
+			target = False
+		else:
+			printf(
+				HTML(
+					f"<err>Usage: <code>:step [yes|no]</code></err>"
+				),
+				style = lamb.utils.style
+			)
+			return
+
+
+	if target:
+		printf(
+			HTML(
+				f"<ok>Enabled step-by-step reduction.</ok>"
+			),
+			style = lamb.utils.style
+		)
+		runner.step_reduction = True
+	else:
+		printf(
+			HTML(
+				f"<ok>Disabled step-by-step reduction.</ok>"
+			),
+			style = lamb.utils.style
+		)
+		runner.step_reduction = False
+
 
 @lamb_command(
 	command_name = "save",
@@ -44,7 +92,7 @@ def cmd_save(command, runner) -> None:
 
 	target = command.args[0]
 	if os.path.exists(target):
-		confirm = runner.prompt_session.prompt(
+		confirm = prompt(
 			message = FormattedText([
 				("class:warn", "File exists. Overwrite? "),
 				("class:text", "[yes/no]: ")
@@ -174,7 +222,7 @@ def mdel(command, runner) -> None:
 	help_text = "Delete all macros"
 )
 def clearmacros(command, runner) -> None:
-	confirm = runner.prompt_session.prompt(
+	confirm = prompt(
 		message = FormattedText([
 			("class:warn", "Are you sure? "),
 			("class:text", "[yes/no]: ")

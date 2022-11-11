@@ -1,5 +1,7 @@
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit import prompt
 from prompt_toolkit import print_formatted_text as printf
 import enum
 import math
@@ -12,6 +14,13 @@ from lamb.runner.misc import Command
 from lamb.runner.misc import StopReason
 from lamb.runner import commands as cmd
 
+
+# Keybindings for step prompt.
+# Prevents any text from being input.
+step_bindings = KeyBindings()
+@step_bindings.add("<any>")
+def _(event):
+	pass
 
 
 class Runner:
@@ -50,6 +59,9 @@ class Runner:
 		self.iter_update = 231
 
 		self.history: list[lamb.nodes.Root] = []
+
+		# If true, reduce step-by-step.
+		self.step_reduction = False
 
 	def prompt(self):
 		return self.prompt_session.prompt(
@@ -96,7 +108,19 @@ class Runner:
 		if len(warnings) != 0:
 			printf(FormattedText(warnings), style = lamb.utils.style)
 
+		if self.step_reduction:
+			printf(FormattedText([
+				("class:warn", "Step-by-step reduction is enabled.\n"),
+				("class:muted", "Press "),
+				("class:cmd_key", "ctrl-c"),
+				("class:muted", " to continue automatically.\n"),
+				("class:muted", "Press "),
+				("class:cmd_key", "enter"),
+				("class:muted", " to step.\n"),
+			]), style = lamb.utils.style)
 
+
+		skip_to_end = False
 		while (
 				(
 					(self.reduction_limit is None) or
@@ -105,7 +129,10 @@ class Runner:
 			):
 
 			# Show reduction count
-			if (k >= self.iter_update) and (k % self.iter_update == 0):
+			if (
+					( (k >= self.iter_update) and (k % self.iter_update == 0) )
+					and not (self.step_reduction and not skip_to_end)
+				):
 				print(f" Reducing... {k:,}", end = "\r")
 
 			try:
@@ -124,6 +151,27 @@ class Runner:
 			k += 1
 			if red_type == lamb.nodes.ReductionType.FUNCTION_APPLY:
 				macro_expansions += 1
+
+			# Pause after step if necessary
+			if self.step_reduction and not skip_to_end:
+				try:
+					s = prompt(
+						message = FormattedText([
+							("class:muted", lamb.nodes.reduction_text[red_type]),
+							("class:muted", f":{k:03} "),
+							("class:text", str(node)),
+						]),
+						style = lamb.utils.style,
+						key_bindings = step_bindings
+					)
+				except KeyboardInterrupt or EOFError:
+					skip_to_end = True
+					printf(FormattedText([
+						("class:warn", "Skipping to end."),
+					]), style = lamb.utils.style)
+
+		if self.step_reduction:
+			print("")
 
 		if k >= self.iter_update:
 			# Clear reduction counter if it was printed

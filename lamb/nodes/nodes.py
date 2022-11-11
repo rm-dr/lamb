@@ -350,7 +350,11 @@ class Bound(EndNode):
 			self.identifier = forced_id
 
 	def copy(self):
-		return Bound(self.name, forced_id = self.identifier, runner = self.runner)
+		return Bound(
+			self.name,
+			forced_id = self.identifier,
+			runner = self.runner
+		)
 
 	def __eq__(self, other):
 		if not isinstance(other, Bound):
@@ -388,7 +392,14 @@ class Func(Node):
 		return f"<func {self.input!r} {self.left!r}>"
 
 	def copy(self):
-		return Func(self.input, None, runner = self.runner) # type: ignore
+		return Func(
+			Bound(
+				self.input.name,
+				runner = self.runner
+			),
+			None, # type: ignore
+			runner = self.runner
+		)
 
 class Root(Node):
 	"""

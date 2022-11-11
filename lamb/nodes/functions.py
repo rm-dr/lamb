@@ -58,14 +58,23 @@ def print_node(node: lbn.Node, *, export: bool = False) -> str:
 
 	return out
 
+
 def clone(node: lbn.Node):
 	if not isinstance(node, lbn.Node):
 		raise TypeError(f"I don't know what to do with a {type(node)}")
 
-	out = node.copy()
+	macro_map = {}
+	if isinstance(node, lbn.Func):
+		c = node.copy()
+		macro_map[node.input.identifier] = c.input.identifier # type: ignore
+	else:
+		c = node.copy()
+
+	out = c
 	out_ptr = out # Stays one step behind ptr, in the new tree.
 	ptr = node
 	from_side = lbn.Direction.UP
+
 
 	if isinstance(node, lbn.EndNode):
 		return out
@@ -79,7 +88,18 @@ def clone(node: lbn.Node):
 		elif isinstance(ptr, lbn.Func) or isinstance(ptr, lbn.Root):
 			if from_side == lbn.Direction.UP:
 				from_side, ptr = ptr.go_left()
-				out_ptr.set_side(ptr.parent_side, ptr.copy())
+
+				if isinstance(ptr, lbn.Func):
+					c = ptr.copy()
+					macro_map[ptr.input.identifier] = c.input.identifier # type: ignore
+				elif isinstance(ptr, lbn.Bound):
+					c = ptr.copy()
+					if c.identifier in macro_map:
+						c.identifier = macro_map[c.identifier]
+				else:
+					c = ptr.copy()
+				out_ptr.set_side(ptr.parent_side, c)
+
 				_, out_ptr = out_ptr.go_left()
 			elif from_side == lbn.Direction.LEFT:
 				from_side, ptr = ptr.go_up()
@@ -87,11 +107,33 @@ def clone(node: lbn.Node):
 		elif isinstance(ptr, lbn.Call):
 			if from_side == lbn.Direction.UP:
 				from_side, ptr = ptr.go_left()
-				out_ptr.set_side(ptr.parent_side, ptr.copy())
+
+				if isinstance(ptr, lbn.Func):
+					c = ptr.copy()
+					macro_map[ptr.input.identifier] = c.input.identifier # type: ignore
+				elif isinstance(ptr, lbn.Bound):
+					c = ptr.copy()
+					if c.identifier in macro_map:
+						c.identifier = macro_map[c.identifier]
+				else:
+					c = ptr.copy()
+				out_ptr.set_side(ptr.parent_side, c)
+
 				_, out_ptr = out_ptr.go_left()
 			elif from_side == lbn.Direction.LEFT:
 				from_side, ptr = ptr.go_right()
-				out_ptr.set_side(ptr.parent_side, ptr.copy())
+
+				if isinstance(ptr, lbn.Func):
+					c = ptr.copy()
+					macro_map[ptr.input.identifier] = c.input.identifier # type: ignore
+				elif isinstance(ptr, lbn.Bound):
+					c = ptr.copy()
+					if c.identifier in macro_map:
+						c.identifier = macro_map[c.identifier]
+				else:
+					c = ptr.copy()
+				out_ptr.set_side(ptr.parent_side, c)
+
 				_, out_ptr = out_ptr.go_right()
 			elif from_side == lbn.Direction.RIGHT:
 				from_side, ptr = ptr.go_up()

@@ -5,6 +5,7 @@ class Direction(enum.Enum):
 	LEFT	= enum.auto()
 	RIGHT	= enum.auto()
 
+
 class ReductionType(enum.Enum):
 	# Nothing happened. This implies that
 	# an expression cannot be reduced further.
@@ -22,6 +23,16 @@ class ReductionType(enum.Enum):
 	# We applied a function.
 	# This is the only type of "formal" reduction step.
 	FUNCTION_APPLY	= enum.auto()
+
+# Pretty, short names for each reduction type.
+# These should all have the same length.
+reduction_text = {
+	ReductionType.NOTHING:			"N",
+	ReductionType.MACRO_EXPAND:		"M",
+	ReductionType.HIST_EXPAND:		"H",
+	ReductionType.AUTOCHURCH:		"C",
+	ReductionType.FUNCTION_APPLY:	"F",
+}
 
 class ReductionError(Exception):
 	"""
