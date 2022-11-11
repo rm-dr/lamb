@@ -66,7 +66,11 @@ Lamb understands many commands. Prefix them with a `:` in the prompt.
 
 `:mdel [macro]` Delete a macro
 
-`:clearmacros` Delete all macros
+`:step [yes | no]` Enable or disable step-by-step reduction. Toggle if no argument is given.
+
+`:expand [yes | no]` Enable or disable full expansion. Toggle if no argument is given. If full expansion is enabled, ALL macros will be expanded when printing output.
+
+`:delmac` Delete all macros
 
 `:save [filename]` \
 `:load [filename]` \
@@ -77,8 +81,8 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 
 
 ## Todo (pre-release, in this order):
+ - History queue
  - Prevent macro-chaining recursion
- - Full-reduce option (expand all macros)
  - Update screenshot
  - Update documentation
  - Write "how it works"
@@ -89,10 +93,9 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
  - Cleanup warnings
  - Syntax highlight printouts
  - Truncate long expressions in warnings
- - History queue + indexing
+ - History indexing
  - Show history command
  - Loop detection
- - Optimization: reduction can be slow with large trees.
  - $\alpha$-equivalence check
  - Command-line options (load a file)
  - Unchurch command: make church numerals human-readable

@@ -61,7 +61,7 @@ def cmd_step(command, runner) -> None:
 	if target:
 		printf(
 			HTML(
-				f"<ok>Enabled step-by-step reduction.</ok>"
+				f"<warn>Enabled step-by-step reduction.</warn>"
 			),
 			style = lamb.utils.style
 		)
@@ -69,11 +69,58 @@ def cmd_step(command, runner) -> None:
 	else:
 		printf(
 			HTML(
-				f"<ok>Disabled step-by-step reduction.</ok>"
+				f"<warn>Disabled step-by-step reduction.</warn>"
 			),
 			style = lamb.utils.style
 		)
 		runner.step_reduction = False
+
+@lamb_command(
+	command_name = "expand",
+	help_text = "Toggle full expansion"
+)
+def cmd_expand(command, runner) -> None:
+	if len(command.args) > 1:
+		printf(
+			HTML(
+				f"<err>Command <code>:{command.name}</code> takes no more than one argument.</err>"
+			),
+			style = lamb.utils.style
+		)
+		return
+
+	target = not runner.full_expansion
+	if len(command.args) == 1:
+		if command.args[0].lower() in ("y", "yes"):
+			target = True
+		elif command.args[0].lower() in ("n", "no"):
+			target = False
+		else:
+			printf(
+				HTML(
+					f"<err>Usage: <code>:expand [yes|no]</code></err>"
+				),
+				style = lamb.utils.style
+			)
+			return
+
+
+	if target:
+		printf(
+			HTML(
+				f"<warn>Enabled complete expansion.</warn>"
+			),
+			style = lamb.utils.style
+		)
+		runner.full_expansion = True
+	else:
+		printf(
+			HTML(
+				f"<warn>Disabled complete expansion.</warn>"
+			),
+			style = lamb.utils.style
+		)
+		runner.full_expansion = False
 
 
 @lamb_command(
@@ -96,7 +143,8 @@ def cmd_save(command, runner) -> None:
 			message = FormattedText([
 				("class:warn", "File exists. Overwrite? "),
 				("class:text", "[yes/no]: ")
-			])
+			]),
+			style = lamb.utils.style
 		).lower()
 
 		if confirm != "yes":
@@ -221,12 +269,13 @@ def mdel(command, runner) -> None:
 @lamb_command(
 	help_text = "Delete all macros"
 )
-def clearmacros(command, runner) -> None:
+def delmac(command, runner) -> None:
 	confirm = prompt(
 		message = FormattedText([
 			("class:warn", "Are you sure? "),
 			("class:text", "[yes/no]: ")
-		])
+		]),
+		style = lamb.utils.style
 	).lower()
 
 	if confirm != "yes":

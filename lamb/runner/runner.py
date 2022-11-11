@@ -63,6 +63,9 @@ class Runner:
 		# If true, reduce step-by-step.
 		self.step_reduction = False
 
+		# If true, expand ALL macros when printing output
+		self.full_expansion = False
+
 	def prompt(self):
 		return self.prompt_session.prompt(
 			message = self.prompt_message
@@ -170,12 +173,18 @@ class Runner:
 						("class:warn", "Skipping to end."),
 					]), style = lamb.utils.style)
 
+		# Print a space between step messages
 		if self.step_reduction:
 			print("")
 
+		# Clear reduction counter if it was printed
 		if k >= self.iter_update:
-			# Clear reduction counter if it was printed
 			print(" " * round(14 + math.log10(k)), end = "\r")
+
+		# Expand fully if necessary
+		if self.full_expansion:
+			o, node = lamb.nodes.expand(node, force_all = True)
+			macro_expansions += o
 
 		if only_macro:
 			out_text += [
@@ -198,6 +207,11 @@ class Runner:
 				("class:muted", f"(Limit: {self.reduction_limit:,})")
 			]
 
+		if self.full_expansion:
+			out_text += [
+				("class:ok", "\nAll macros have been expanded")
+			]
+
 		if (
 				stop_reason == StopReason.BETA_NORMAL or
 				stop_reason == StopReason.LOOP_DETECTED or
@@ -208,13 +222,15 @@ class Runner:
 				("class:text", str(node)), # type: ignore
 			]
 
-			self.history.append(lamb.nodes.expand(node, force_all = True)[1])
-
 
 		printf(
 			FormattedText(out_text),
 			style = lamb.utils.style
 		)
+
+		# Save to history
+		# Do this at the end so we don't always fully expand.
+		self.history.append(lamb.nodes.expand(node, force_all = True)[1])
 
 	def save_macro(
 			self,
