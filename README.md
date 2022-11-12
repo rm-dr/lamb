@@ -88,14 +88,12 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 
 
 ## Todo (pre-release, in this order):
- - Prevent macro-chaining recursion
- - Update screenshot
- - Update documentation
  - Write "how it works"
  - PyPi package
 
 
 ## Todo:
+ - Prevent macro-chaining recursion
  - Cleanup warnings
  - Truncate long expressions in warnings
  - History indexing
