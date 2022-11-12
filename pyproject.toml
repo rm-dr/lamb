@@ -1,30 +1,28 @@
+[build-system]
+requires = [ "setuptools>=61.0" ]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = [ "." ]
+include = ["lamb_engine*"]
+namespaces = false
+
+[project.scripts]
+lamb = "lamb_engine:main"
+
+
+
 [project]
-name = "Lamb"
+name = "lamb_engine"
 description = "A lambda calculus engine"
-
-# We use the standard semantic versioning:
-# maj.min.pat
-#
-# Major release:
-# 1.0.0 is the first stable release.
-# Incremented on BIG breaking changes.
-#
-# Minor release:
-# Large bug fixes, new features
-#
-# Patch release:
-# Small, compatible fixes.
-version = "1.1.4"
-
+version = "1.1.5"
 dependencies = [
 	"prompt-toolkit==3.0.31",
 	"pyparsing==3.0.9"
 ]
-
 authors = [
 	{ name="Mark", email="mark@betalupi.com" }
 ]
-
 readme = "README.md"
 requires-python = ">=3.7"
 license = {text = "GNU General Public License v3 (GPLv3)"}
@@ -35,16 +33,10 @@ classifiers = [
 	"Environment :: Console"
 ]
 
-
 [project.urls]
 "Homepage" = "https://git.betalupi.com/Mark/lamb"
 
-
-[build-system]
-requires = [ "setuptools>=61.0" ]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-where = ["lamb_engine"]
-include = ["lamb_engine*"]
-namespaces = false
+# To build:
+# pip install build twine
+# python -m build
+# python -m twine upload dist/*

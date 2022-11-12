@@ -1,6 +1,3 @@
-if __name__ != "__main__":
-	raise ImportError("lamb_engine.__main__ should never be imported. Run it directly.")
-
 from prompt_toolkit import PromptSession
 from prompt_toolkit import print_formatted_text as printf
 from prompt_toolkit.formatted_text import FormattedText
@@ -9,53 +6,57 @@ from pyparsing import exceptions as ppx
 
 import lamb_engine
 
+def main():
 
-lamb_engine.utils.show_greeting()
+	lamb_engine.utils.show_greeting()
 
 
-r = lamb_engine.Runner(
-	prompt_session = PromptSession(
-		style = lamb_engine.utils.style,
-		lexer = lamb_engine.utils.LambdaLexer(),
-		key_bindings = lamb_engine.utils.bindings
-	),
-	prompt_message = FormattedText([
-		("class:prompt", "==> ")
-	])
-)
+	r = lamb_engine.Runner(
+		prompt_session = PromptSession(
+			style = lamb_engine.utils.style,
+			lexer = lamb_engine.utils.LambdaLexer(),
+			key_bindings = lamb_engine.utils.bindings
+		),
+		prompt_message = FormattedText([
+			("class:prompt", "==> ")
+		])
+	)
 
-while True:
-	try:
-		i = r.prompt()
+	while True:
+		try:
+			i = r.prompt()
 
-	# Catch Ctrl-C and Ctrl-D
-	except KeyboardInterrupt:
-		printf("\n\nGoodbye.\n")
-		break
-	except EOFError:
-		printf("\n\nGoodbye.\n")
-		break
+		# Catch Ctrl-C and Ctrl-D
+		except KeyboardInterrupt:
+			printf("\n\nGoodbye.\n")
+			break
+		except EOFError:
+			printf("\n\nGoodbye.\n")
+			break
 
-	# Skip empty lines
-	if i.strip() == "":
-		continue
+		# Skip empty lines
+		if i.strip() == "":
+			continue
 
-	# Try to run an input line.
-	# Catch parse errors and point them out.
-	try:
-		x = r.run(i)
-	except ppx.ParseException as e:
-		l = len(to_plain_text(r.prompt_session.message))
-		printf(FormattedText([
-			("class:err", " "*(e.loc + l) + "^\n"),
-			("class:err", f"Syntax error at char {e.loc}."),
-			("class:text", "\n")
-		]), style = lamb_engine.utils.style)
-		continue
-	except lamb_engine.nodes.ReductionError as e:
-		printf(FormattedText([
-			("class:err", f"{e.msg}\n")
-		]), style = lamb_engine.utils.style)
-		continue
+		# Try to run an input line.
+		# Catch parse errors and point them out.
+		try:
+			x = r.run(i)
+		except ppx.ParseException as e:
+			l = len(to_plain_text(r.prompt_session.message))
+			printf(FormattedText([
+				("class:err", " "*(e.loc + l) + "^\n"),
+				("class:err", f"Syntax error at char {e.loc}."),
+				("class:text", "\n")
+			]), style = lamb_engine.utils.style)
+			continue
+		except lamb_engine.nodes.ReductionError as e:
+			printf(FormattedText([
+				("class:err", f"{e.msg}\n")
+			]), style = lamb_engine.utils.style)
+			continue
 
-	printf("")
+		printf("")
+
+if __name__ == "__main__":
+	main()

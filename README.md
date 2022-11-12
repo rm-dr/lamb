@@ -1,19 +1,22 @@
 # Lamb: A Lambda Calculus Engine
 
+If you're reading this on PyPi, go [here](https://git.betalupi.com/Mark/lamb).
+
 ![Lamb screenshot](./misc/screenshot.png)
+
 
 ## Installation
 
-### Method 1: PyPi (not yet)
-1. Put this on PyPi
-2. Write these instructions
+### Method 1: PyPi [here](https://pypi.org/project/lamb-engine)
+1. `pip install lamb-engine`
+2. `lamb`
 
 ### Method 2: Git
 1. Clone this repository.
 2. Make and enter a [virtual environment](https://docs.python.org/3/library/venv.html).
 3. ``cd`` into this directory
 4. Run ``pip install .``
-5. Run ``python .``
+5. Run ``lamb``
 
 -------------------------------------------------
 
@@ -43,7 +46,7 @@ Numbers will automatically be converted to Church numerals. For example, the fol
 If an expression takes too long to evaluate, you may interrupt reduction with `Ctrl-C`. \
 Exit the prompt with `Ctrl-C` or `Ctrl-D`.
 
-There are many useful macros in [macros.lamb](./macros.lamb). Load them with the `:load` command:
+There are many useful macros in [macros.lamb](./macros.lamb). Download the file, then load them with the `:load` command:
 ```
 ==> :load macros.lamb
 ```
@@ -86,20 +89,12 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 
 -------------------------------------------------
 
-
-## Todo (pre-release, in this order):
- - Write "how it works"
- - PyPi package
-
-
 ## Todo:
  - Prevent macro-chaining recursion
  - Cleanup warnings
  - Truncate long expressions in warnings
- - History indexing
- - Show history command
  - Loop detection
- - $\alpha$-equivalence check
+ - α-equivalence check
  - Command-line options (load a file)
  - Unchurch command: make church numerals human-readable
  - Better Syntax highlighting
