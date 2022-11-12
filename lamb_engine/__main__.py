@@ -3,6 +3,7 @@ from prompt_toolkit import print_formatted_text as printf
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.formatted_text import to_plain_text
 from pyparsing import exceptions as ppx
+import sys
 
 import lamb_engine
 
@@ -21,6 +22,22 @@ def main():
 			("class:prompt", "==> ")
 		])
 	)
+
+	# Load files passed as arguments
+	if len(sys.argv) > 1:
+		for i in range(1, len(sys.argv)):
+			try:
+				printf(FormattedText([
+					("class:warn", "\nLoading file "),
+					("class:code", sys.argv[i]),
+				]), style = lamb_engine.utils.style)
+				r.run(":load " + sys.argv[i])
+			except:
+				printf(FormattedText([
+					("class:err", "Error. Does this file exist?"),
+				]), style = lamb_engine.utils.style)
+
+		print("")
 
 	while True:
 		try:

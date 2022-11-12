@@ -51,7 +51,12 @@ There are many useful macros in [macros.lamb](./macros.lamb). Download the file,
 ==> :load macros.lamb
 ```
 
-You may use up/down arrows to recall history.
+You can also pass files to lamb directly to have them loaded at startup:
+```
+lamb file1 file2
+```
+
+Use your up/down arrows to recall history.
 
 Have fun!
 
@@ -61,15 +66,17 @@ Have fun!
 
 Lamb understands many commands. Prefix them with a `:` in the prompt.
 
-`:help` Prints a help message
+`:help` Print a help message
 
 `:clear` Clear the screen
 
 `:rlimit [int | None]` Set maximum reduction limit. `:rlimit none` sets no limit.
 
-`:macros` List macros in the current environment.
+`:macros` List macros.
 
 `:mdel [macro]` Delete a macro
+
+`:delmac` Delete all macros
 
 `:step [yes | no]` Enable or disable step-by-step reduction. Toggle if no argument is given. When reducing by steps, the prompt tells you what kind of reduction was done last:
 
@@ -79,8 +86,6 @@ Lamb understands many commands. Prefix them with a `:` in the prompt.
  - `F`: Function application
 
 `:expand [yes | no]` Enable or disable full expansion. Toggle if no argument is given. If full expansion is enabled, ALL macros will be expanded when printing output.
-
-`:delmac` Delete all macros
 
 `:save [filename]` \
 `:load [filename]` \
@@ -95,7 +100,6 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
  - Truncate long expressions in warnings
  - Loop detection
  - α-equivalence check
- - Command-line options (load a file)
  - Unchurch command: make church numerals human-readable
  - Better Syntax highlighting
  - Complete file names and commands
