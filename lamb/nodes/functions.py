@@ -162,14 +162,13 @@ def prepare(root: lbn.Root, *, ban_macro_name = None) -> list:
 	it = iter(root)
 	for s, n in it:
 		if isinstance(n, lbn.History):
-			if len(root.runner.history) == 0:
+			if root.runner.history[0] == None:
 				raise lbn.ReductionError("There isn't any history to reference.")
 			else:
 				warnings += [
 					("class:code", "$"),
-					("class:warn", " will be expanded to "),
-					("class:code", f"{n.expand()[1]}\n"),
-				]
+					("class:warn", " will be expanded to ")
+				] + lamb.utils.lex_str(str(n.expand()[1]))
 
 		# If this expression is part of a macro,
 		# make sure we don't reference it inside itself.

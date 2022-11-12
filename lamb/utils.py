@@ -4,6 +4,7 @@ from prompt_toolkit.lexers import Lexer
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit import print_formatted_text as printf
 from importlib.metadata import version
+from prompt_toolkit.document import Document
 
 import re
 
@@ -76,6 +77,10 @@ class LambdaLexer(Lexer):
 			return out
 		return inner
 
+
+
+def lex_str(s: str) -> list[tuple[str, str]]:
+	return LambdaLexer().lex_document(Document(s))(0)
 
 def show_greeting():
 	#   |  _.._ _.|_

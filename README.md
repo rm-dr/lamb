@@ -48,6 +48,8 @@ There are many useful macros in [macros.lamb](./macros.lamb). Load them with the
 ==> :load macros.lamb
 ```
 
+You may use up/down arrows to recall history.
+
 Have fun!
 
 -------------------------------------------------
@@ -66,7 +68,12 @@ Lamb understands many commands. Prefix them with a `:` in the prompt.
 
 `:mdel [macro]` Delete a macro
 
-`:step [yes | no]` Enable or disable step-by-step reduction. Toggle if no argument is given.
+`:step [yes | no]` Enable or disable step-by-step reduction. Toggle if no argument is given. When reducing by steps, the prompt tells you what kind of reduction was done last:
+
+ - `M`: Macro expansion
+ - `C`: Church expansion
+ - `H`: History expansion
+ - `F`: Function application
 
 `:expand [yes | no]` Enable or disable full expansion. Toggle if no argument is given. If full expansion is enabled, ALL macros will be expanded when printing output.
 
@@ -81,7 +88,6 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 
 
 ## Todo (pre-release, in this order):
- - History queue
  - Prevent macro-chaining recursion
  - Update screenshot
  - Update documentation
@@ -91,7 +97,6 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
 
 ## Todo:
  - Cleanup warnings
- - Syntax highlight printouts
  - Truncate long expressions in warnings
  - History indexing
  - Show history command

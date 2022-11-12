@@ -3,7 +3,7 @@ from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit import prompt
 from prompt_toolkit import print_formatted_text as printf
-import enum
+import collections
 import math
 import time
 
@@ -58,7 +58,10 @@ class Runner:
 		# so that all digits appear to be changing.
 		self.iter_update = 231
 
-		self.history: list[lamb.nodes.Root] = []
+		self.history = collections.deque(
+			[None] * 10,
+			10)
+
 
 		# If true, reduce step-by-step.
 		self.step_reduction = False
@@ -160,10 +163,9 @@ class Runner:
 				try:
 					s = prompt(
 						message = FormattedText([
-							("class:muted", lamb.nodes.reduction_text[red_type]),
-							("class:muted", f":{k:03} "),
-							("class:text", str(node)),
-						]),
+							("class:prompt", lamb.nodes.reduction_text[red_type]),
+							("class:prompt", f":{k:03} ")
+						] + lamb.utils.lex_str(str(node))),
 						style = lamb.utils.style,
 						key_bindings = step_bindings
 					)
@@ -218,9 +220,8 @@ class Runner:
 				only_macro
 		):
 			out_text += [
-				("class:ok", "\n\n    => "),
-				("class:text", str(node)), # type: ignore
-			]
+				("class:ok", "\n\n    => ")
+			] + lamb.utils.lex_str(str(node))
 
 
 		printf(
@@ -230,7 +231,12 @@ class Runner:
 
 		# Save to history
 		# Do this at the end so we don't always fully expand.
-		self.history.append(lamb.nodes.expand(node, force_all = True)[1])
+		self.history.appendleft(
+			lamb.nodes.expand( # type: ignore
+				node,
+				force_all = True
+			)[1]
+		)
 
 	def save_macro(
 			self,

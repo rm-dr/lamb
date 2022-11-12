@@ -321,12 +321,12 @@ class History(ExpandableEndNode):
 	def expand(self) -> tuple[lbn.ReductionType, Node]:
 		# We shouldn't ever get here, prepare()
 		# catches empty history.
-		if len(self.runner.history) == 0:
+		if self.runner.history[0] == None:
 			raise Exception(f"Tried to expand empty history.")
 		# .left is VERY important!
 		# self.runner.history will contain Root nodes,
 		# and we don't want those *inside* our tree.
-		return lbn.ReductionType.HIST_EXPAND, lbn.clone(self.runner.history[-1].left)
+		return lbn.ReductionType.HIST_EXPAND, lbn.clone(self.runner.history[0].left)
 
 	def copy(self):
 		return History(runner = self.runner)

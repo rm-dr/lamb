@@ -234,9 +234,8 @@ def cmd_load(command, runner):
 
 		printf(
 			FormattedText([
-				("class:ok", f"Loaded {x.label}: "),
-				("class:code", str(x.expr))
-			]),
+				("class:ok", f"Loaded {x.label}: ")
+			] + lamb.utils.lex_str(str(x.expr))),
 			style = lamb.utils.style
 		)
 
