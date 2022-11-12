@@ -1,5 +1,5 @@
 import enum
-import lamb
+import lamb_engine
 
 class StopReason(enum.Enum):
 	BETA_NORMAL		= ("class:text", "β-normal form")
@@ -16,7 +16,7 @@ class MacroDef:
 			result[1]
 		)
 
-	def __init__(self, label: str, expr: lamb.nodes.Node):
+	def __init__(self, label: str, expr: lamb_engine.nodes.Node):
 		self.label = label
 		self.expr = expr
 

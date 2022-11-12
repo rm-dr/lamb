@@ -1,5 +1,5 @@
-import lamb
-import lamb.nodes as lbn
+import lamb_engine
+import lamb_engine.nodes as lbn
 
 class TreeWalker:
 	"""
@@ -82,7 +82,7 @@ class Node:
 
 		# The runner this node is attached to.
 		# Set by Node.set_runner()
-		self.runner: lamb.runner.Runner = None # type: ignore
+		self.runner: lamb_engine.runner.Runner = None # type: ignore
 
 	def __iter__(self):
 		return TreeWalker(self)

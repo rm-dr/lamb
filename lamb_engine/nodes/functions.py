@@ -1,5 +1,5 @@
-import lamb
-import lamb.nodes as lbn
+import lamb_engine
+import lamb_engine.nodes as lbn
 
 def print_node(node: lbn.Node, *, export: bool = False) -> str:
 	if not isinstance(node, lbn.Node):
@@ -28,7 +28,7 @@ def print_node(node: lbn.Node, *, export: bool = False) -> str:
 					i = -1
 					p = o
 					while o in bound_subs.values():
-						o = p + lamb.utils.subscript(i := i + 1)
+						o = p + lamb_engine.utils.subscript(i := i + 1)
 					bound_subs[n.input.identifier] = o
 				else:
 					bound_subs[n.input.identifier] = n.input.print_value()
@@ -168,7 +168,7 @@ def prepare(root: lbn.Root, *, ban_macro_name = None) -> list:
 				warnings += [
 					("class:code", "$"),
 					("class:warn", " will be expanded to ")
-				] + lamb.utils.lex_str(str(n.expand()[1]))
+				] + lamb_engine.utils.lex_str(str(n.expand()[1]))
 
 		# If this expression is part of a macro,
 		# make sure we don't reference it inside itself.
@@ -208,7 +208,7 @@ def prepare(root: lbn.Root, *, ban_macro_name = None) -> list:
 					raise lbn.ReductionError(f"Bound variable name conflict: \"{n.input.name}\"")
 				else:
 					bound_variables[n.input.name] = lbn.Bound(
-						lamb.utils.remove_sub(n.input.name),
+						lamb_engine.utils.remove_sub(n.input.name),
 						macro_name = n.input.name
 					)
 					n.input = bound_variables[n.input.name]

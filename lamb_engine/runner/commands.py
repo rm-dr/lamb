@@ -7,7 +7,7 @@ from prompt_toolkit import prompt
 import os.path
 from pyparsing import exceptions as ppx
 
-import lamb
+import lamb_engine
 
 commands = {}
 help_texts = {}
@@ -38,7 +38,7 @@ def cmd_step(command, runner) -> None:
 			HTML(
 				f"<err>Command <code>:{command.name}</code> takes no more than one argument.</err>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -53,7 +53,7 @@ def cmd_step(command, runner) -> None:
 				HTML(
 					f"<err>Usage: <code>:step [yes|no]</code></err>"
 				),
-				style = lamb.utils.style
+				style = lamb_engine.utils.style
 			)
 			return
 
@@ -63,7 +63,7 @@ def cmd_step(command, runner) -> None:
 			HTML(
 				f"<warn>Enabled step-by-step reduction.</warn>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		runner.step_reduction = True
 	else:
@@ -71,7 +71,7 @@ def cmd_step(command, runner) -> None:
 			HTML(
 				f"<warn>Disabled step-by-step reduction.</warn>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		runner.step_reduction = False
 
@@ -85,7 +85,7 @@ def cmd_expand(command, runner) -> None:
 			HTML(
 				f"<err>Command <code>:{command.name}</code> takes no more than one argument.</err>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -100,7 +100,7 @@ def cmd_expand(command, runner) -> None:
 				HTML(
 					f"<err>Usage: <code>:expand [yes|no]</code></err>"
 				),
-				style = lamb.utils.style
+				style = lamb_engine.utils.style
 			)
 			return
 
@@ -110,7 +110,7 @@ def cmd_expand(command, runner) -> None:
 			HTML(
 				f"<warn>Enabled complete expansion.</warn>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		runner.full_expansion = True
 	else:
@@ -118,7 +118,7 @@ def cmd_expand(command, runner) -> None:
 			HTML(
 				f"<warn>Disabled complete expansion.</warn>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		runner.full_expansion = False
 
@@ -133,7 +133,7 @@ def cmd_save(command, runner) -> None:
 			HTML(
 				f"<err>Command <code>:{command.name}</code> takes exactly one argument.</err>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -144,7 +144,7 @@ def cmd_save(command, runner) -> None:
 				("class:warn", "File exists. Overwrite? "),
 				("class:text", "[yes/no]: ")
 			]),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		).lower()
 
 		if confirm != "yes":
@@ -152,7 +152,7 @@ def cmd_save(command, runner) -> None:
 				HTML(
 					"<err>Cancelled.</err>"
 				),
-				style = lamb.utils.style
+				style = lamb_engine.utils.style
 			)
 			return
 
@@ -165,7 +165,7 @@ def cmd_save(command, runner) -> None:
 		HTML(
 			f"Wrote {len(runner.macro_table)} macros to <code>{target}</code>"
 		),
-		style = lamb.utils.style
+		style = lamb_engine.utils.style
 	)
 
 
@@ -179,7 +179,7 @@ def cmd_load(command, runner):
 			HTML(
 				f"<err>Command <code>:{command.name}</code> takes exactly one argument.</err>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -189,7 +189,7 @@ def cmd_load(command, runner):
 			HTML(
 				f"<err>File {target} doesn't exist.</err>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -215,18 +215,18 @@ def cmd_load(command, runner):
 					("class:err", l[e.loc]),
 					("class:code", l[e.loc+1:])
 				]),
-				style = lamb.utils.style
+				style = lamb_engine.utils.style
 			)
 			return
 
-		if not isinstance(x, lamb.runner.runner.MacroDef):
+		if not isinstance(x, lamb_engine.runner.runner.MacroDef):
 			printf(
 				FormattedText([
 					("class:warn", f"Skipping line {i+1:02}: "),
 					("class:code", l),
 					("class:warn", f" is not a macro definition.")
 				]),
-				style = lamb.utils.style
+				style = lamb_engine.utils.style
 			)
 			return
 
@@ -235,8 +235,8 @@ def cmd_load(command, runner):
 		printf(
 			FormattedText([
 				("class:ok", f"Loaded {x.label}: ")
-			] + lamb.utils.lex_str(str(x.expr))),
-			style = lamb.utils.style
+			] + lamb_engine.utils.lex_str(str(x.expr))),
+			style = lamb_engine.utils.style
 		)
 
 
@@ -249,7 +249,7 @@ def mdel(command, runner) -> None:
 			HTML(
 				f"<err>Command <code>:{command.name}</code> takes exactly one argument.</err>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -259,7 +259,7 @@ def mdel(command, runner) -> None:
 			HTML(
 				f"<warn>Macro \"{target}\" is not defined</warn>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -274,7 +274,7 @@ def delmac(command, runner) -> None:
 			("class:warn", "Are you sure? "),
 			("class:text", "[yes/no]: ")
 		]),
-		style = lamb.utils.style
+		style = lamb_engine.utils.style
 	).lower()
 
 	if confirm != "yes":
@@ -282,7 +282,7 @@ def delmac(command, runner) -> None:
 			HTML(
 				"<err>Cancelled.</err>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -297,7 +297,7 @@ def macros(command, runner) -> None:
 		printf(FormattedText([
 				("class:warn", "No macros are defined."),
 			]),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 	else:
 		printf(FormattedText([
@@ -307,7 +307,7 @@ def macros(command, runner) -> None:
 				("class:text", f"\t{name} \t {exp}\n")
 				for name, exp in runner.macro_table.items()
 			]),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 
 @lamb_command(
@@ -315,7 +315,7 @@ def macros(command, runner) -> None:
 )
 def clear(command, runner) -> None:
 	clear_screen()
-	lamb.utils.show_greeting()
+	lamb_engine.utils.show_greeting()
 
 @lamb_command(
 	help_text = "Get or set reduction limit"
@@ -327,14 +327,14 @@ def rlimit(command, runner) -> None:
 				HTML(
 					"<ok>No reduction limit is set</ok>"
 				),
-				style = lamb.utils.style
+				style = lamb_engine.utils.style
 			)
 		else:
 			printf(
 				HTML(
 					f"<ok>Reduction limit is {runner.reduction_limit:,}</ok>"
 				),
-				style = lamb.utils.style
+				style = lamb_engine.utils.style
 			)
 		return
 
@@ -343,7 +343,7 @@ def rlimit(command, runner) -> None:
 			HTML(
 				f"<err>Command <code>:{command.name}</code> takes exactly one argument.</err>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -354,7 +354,7 @@ def rlimit(command, runner) -> None:
 			HTML(
 				f"<ok>Removed reduction limit</ok>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -365,7 +365,7 @@ def rlimit(command, runner) -> None:
 			HTML(
 				"<err>Reduction limit must be a positive integer or \"none\".</err>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -374,7 +374,7 @@ def rlimit(command, runner) -> None:
 			HTML(
 				"<err>Reduction limit must be at least 50.</err>"
 			),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 		return
 
@@ -383,7 +383,7 @@ def rlimit(command, runner) -> None:
 		HTML(
 			f"<ok>Set reduction limit to {t:,}</ok>"
 		),
-		style = lamb.utils.style
+		style = lamb_engine.utils.style
 	)
 
 
@@ -416,5 +416,5 @@ def help(command, runner) -> None:
 			"<muted>Detailed documentation can be found on this project's git page.</muted>" +
 			"</text>"
 		),
-		style = lamb.utils.style
+		style = lamb_engine.utils.style
 	)

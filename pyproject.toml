@@ -45,10 +45,6 @@ requires = [ "setuptools>=61.0" ]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["lamb"]
-include = ["lamb*"]
+where = ["lamb_engine"]
+include = ["lamb_engine*"]
 namespaces = false
-
-[project.optional-dependencies]
-# Used to build a standalone executable
-pyinstaller = [	"pyinstaller==5.5" ]

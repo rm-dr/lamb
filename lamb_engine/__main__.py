@@ -1,5 +1,5 @@
 if __name__ != "__main__":
-	raise ImportError("lamb.__main__ should never be imported. Run it directly.")
+	raise ImportError("lamb_engine.__main__ should never be imported. Run it directly.")
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit import print_formatted_text as printf
@@ -7,17 +7,17 @@ from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.formatted_text import to_plain_text
 from pyparsing import exceptions as ppx
 
-import lamb
+import lamb_engine
 
 
-lamb.utils.show_greeting()
+lamb_engine.utils.show_greeting()
 
 
-r = lamb.Runner(
+r = lamb_engine.Runner(
 	prompt_session = PromptSession(
-		style = lamb.utils.style,
-		lexer = lamb.utils.LambdaLexer(),
-		key_bindings = lamb.utils.bindings
+		style = lamb_engine.utils.style,
+		lexer = lamb_engine.utils.LambdaLexer(),
+		key_bindings = lamb_engine.utils.bindings
 	),
 	prompt_message = FormattedText([
 		("class:prompt", "==> ")
@@ -50,12 +50,12 @@ while True:
 			("class:err", " "*(e.loc + l) + "^\n"),
 			("class:err", f"Syntax error at char {e.loc}."),
 			("class:text", "\n")
-		]), style = lamb.utils.style)
+		]), style = lamb_engine.utils.style)
 		continue
-	except lamb.nodes.ReductionError as e:
+	except lamb_engine.nodes.ReductionError as e:
 		printf(FormattedText([
 			("class:err", f"{e.msg}\n")
-		]), style = lamb.utils.style)
+		]), style = lamb_engine.utils.style)
 		continue
 
 	printf("")

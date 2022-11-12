@@ -7,12 +7,12 @@ import collections
 import math
 import time
 
-import lamb
+import lamb_engine
 
-from lamb.runner.misc import MacroDef
-from lamb.runner.misc import Command
-from lamb.runner.misc import StopReason
-from lamb.runner import commands as cmd
+from lamb_engine.runner.misc import MacroDef
+from lamb_engine.runner.misc import Command
+from lamb_engine.runner.misc import StopReason
+from lamb_engine.runner import commands as cmd
 
 
 # Keybindings for step prompt.
@@ -32,15 +32,15 @@ class Runner:
 		self.macro_table = {}
 		self.prompt_session = prompt_session
 		self.prompt_message = prompt_message
-		self.parser = lamb.parser.LambdaParser(
-			action_func = lamb.nodes.Func.from_parse,
-			action_bound = lamb.nodes.Macro.from_parse,
-			action_macro = lamb.nodes.Macro.from_parse,
-			action_call = lamb.nodes.Call.from_parse,
-			action_church = lamb.nodes.Church.from_parse,
+		self.parser = lamb_engine.parser.LambdaParser(
+			action_func = lamb_engine.nodes.Func.from_parse,
+			action_bound = lamb_engine.nodes.Macro.from_parse,
+			action_macro = lamb_engine.nodes.Macro.from_parse,
+			action_call = lamb_engine.nodes.Call.from_parse,
+			action_church = lamb_engine.nodes.Church.from_parse,
 			action_macro_def = MacroDef.from_parse,
 			action_command = Command.from_parse,
-			action_history = lamb.nodes.History.from_parse
+			action_history = lamb_engine.nodes.History.from_parse
 		)
 
 		# Maximum amount of reductions.
@@ -74,23 +74,23 @@ class Runner:
 			message = self.prompt_message
 		)
 
-	def parse(self, line) -> tuple[lamb.nodes.Root | MacroDef | Command, list]:
+	def parse(self, line) -> tuple[lamb_engine.nodes.Root | MacroDef | Command, list]:
 		e = self.parser.parse_line(line)
 
 		w = []
 		if isinstance(e, MacroDef):
-			e.expr = lamb.nodes.Root(e.expr)
+			e.expr = lamb_engine.nodes.Root(e.expr)
 			e.set_runner(self)
-			w = lamb.nodes.prepare(e.expr, ban_macro_name = e.label)
-		elif isinstance(e, lamb.nodes.Node):
-			e = lamb.nodes.Root(e)
+			w = lamb_engine.nodes.prepare(e.expr, ban_macro_name = e.label)
+		elif isinstance(e, lamb_engine.nodes.Node):
+			e = lamb_engine.nodes.Root(e)
 			e.set_runner(self)
-			w = lamb.nodes.prepare(e)
+			w = lamb_engine.nodes.prepare(e)
 
 		return e, w
 
 
-	def reduce(self, node: lamb.nodes.Root, *, warnings = []) -> None:
+	def reduce(self, node: lamb_engine.nodes.Root, *, warnings = []) -> None:
 
 		# Reduction Counter.
 		# We also count macro (and church) expansions,
@@ -103,16 +103,16 @@ class Runner:
 		out_text = []
 
 		only_macro = (
-			isinstance(node.left, lamb.nodes.Macro) or
-			isinstance(node.left, lamb.nodes.Church)
+			isinstance(node.left, lamb_engine.nodes.Macro) or
+			isinstance(node.left, lamb_engine.nodes.Church)
 		)
 		if only_macro:
 			stop_reason = StopReason.SHOW_MACRO
-		m, node = lamb.nodes.expand(node, force_all = only_macro)
+		m, node = lamb_engine.nodes.expand(node, force_all = only_macro)
 		macro_expansions += m
 
 		if len(warnings) != 0:
-			printf(FormattedText(warnings), style = lamb.utils.style)
+			printf(FormattedText(warnings), style = lamb_engine.utils.style)
 
 		if self.step_reduction:
 			printf(FormattedText([
@@ -123,7 +123,7 @@ class Runner:
 				("class:muted", "Press "),
 				("class:cmd_key", "enter"),
 				("class:muted", " to step.\n"),
-			]), style = lamb.utils.style)
+			]), style = lamb_engine.utils.style)
 
 
 		skip_to_end = False
@@ -142,20 +142,20 @@ class Runner:
 				print(f" Reducing... {k:,}", end = "\r")
 
 			try:
-				red_type, node = lamb.nodes.reduce(node)
+				red_type, node = lamb_engine.nodes.reduce(node)
 			except KeyboardInterrupt:
 				stop_reason = StopReason.INTERRUPT
 				break
 
 			# If we can't reduce this expression anymore,
 			# it's in beta-normal form.
-			if red_type == lamb.nodes.ReductionType.NOTHING:
+			if red_type == lamb_engine.nodes.ReductionType.NOTHING:
 				stop_reason = StopReason.BETA_NORMAL
 				break
 
 			# Count reductions
 			k += 1
-			if red_type == lamb.nodes.ReductionType.FUNCTION_APPLY:
+			if red_type == lamb_engine.nodes.ReductionType.FUNCTION_APPLY:
 				macro_expansions += 1
 
 			# Pause after step if necessary
@@ -163,17 +163,17 @@ class Runner:
 				try:
 					s = prompt(
 						message = FormattedText([
-							("class:prompt", lamb.nodes.reduction_text[red_type]),
+							("class:prompt", lamb_engine.nodes.reduction_text[red_type]),
 							("class:prompt", f":{k:03} ")
-						] + lamb.utils.lex_str(str(node))),
-						style = lamb.utils.style,
+						] + lamb_engine.utils.lex_str(str(node))),
+						style = lamb_engine.utils.style,
 						key_bindings = step_bindings
 					)
 				except KeyboardInterrupt or EOFError:
 					skip_to_end = True
 					printf(FormattedText([
 						("class:warn", "Skipping to end."),
-					]), style = lamb.utils.style)
+					]), style = lamb_engine.utils.style)
 
 		# Print a space between step messages
 		if self.step_reduction:
@@ -185,7 +185,7 @@ class Runner:
 
 		# Expand fully if necessary
 		if self.full_expansion:
-			o, node = lamb.nodes.expand(node, force_all = True)
+			o, node = lamb_engine.nodes.expand(node, force_all = True)
 			macro_expansions += o
 
 		if only_macro:
@@ -221,18 +221,18 @@ class Runner:
 		):
 			out_text += [
 				("class:ok", "\n\n    => ")
-			] + lamb.utils.lex_str(str(node))
+			] + lamb_engine.utils.lex_str(str(node))
 
 
 		printf(
 			FormattedText(out_text),
-			style = lamb.utils.style
+			style = lamb_engine.utils.style
 		)
 
 		# Save to history
 		# Do this at the end so we don't always fully expand.
 		self.history.appendleft(
-			lamb.nodes.expand( # type: ignore
+			lamb_engine.nodes.expand( # type: ignore
 				node,
 				force_all = True
 			)[1]
@@ -253,7 +253,7 @@ class Runner:
 				("class:code", macro.label),
 				("class:text", " to "),
 				("class:code", str(macro.expr))
-			]), style = lamb.utils.style)
+			]), style = lamb_engine.utils.style)
 
 	# Apply a list of definitions
 	def run(
@@ -275,13 +275,13 @@ class Runner:
 					FormattedText([
 						("class:warn", f"Unknown command \"{e.name}\"")
 					]),
-					style = lamb.utils.style
+					style = lamb_engine.utils.style
 				)
 			else:
 				cmd.commands[e.name](e, self)
 
 		# If this line is a plain expression, reduce it.
-		elif isinstance(e, lamb.nodes.Node):
+		elif isinstance(e, lamb_engine.nodes.Node):
 			self.reduce(e, warnings = w)
 
 		# We shouldn't ever get here.
