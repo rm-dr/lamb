@@ -39,4 +39,4 @@ classifiers = [
 # To build:
 # pip install build twine
 # python -m build
-# python -m twine upload dist/*
+# twine upload dist/lamb_engine-1.1.6* (change the version)
