@@ -1,7 +1,12 @@
+# Python dev files
 venv
 __pycache__
 
+# Python build files
 *.egg-info
 *.spec
 build
 dist
+
+# Misc
+*.gif
