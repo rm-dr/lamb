@@ -196,24 +196,31 @@ class Runner:
 			]
 
 		else:
+			if not self.step_reduction:
+				out_text += [
+					("class:ok", f"Runtime: "),
+					("class:text", f"{time.time() - start_time:.03f} seconds"),
+					("class:text", "\n")
+				]
+
 			out_text += [
-				("class:ok", f"Runtime: "),
-				("class:text", f"{time.time() - start_time:.03f} seconds"),
-
-				("class:ok", f"\nExit reason: "),
+				("class:ok", f"Exit reason: "),
 				stop_reason.value,
+				("class:text", "\n"),
 
-				("class:ok", f"\nMacro expansions: "),
+				("class:ok", f"Macro expansions: "),
 				("class:text", f"{macro_expansions:,}"),
+				("class:text", "\n"),
 
-				("class:ok", f"\nReductions: "),
+				("class:ok", f"Reductions: "),
 				("class:text", f"{k:,}\t"),
 				("class:muted", f"(Limit: {self.reduction_limit:,})")
 			]
 
 		if self.full_expansion:
 			out_text += [
-				("class:ok", "\nAll macros have been expanded")
+				("class:text", "\n"),
+				("class:ok", "All macros have been expanded")
 			]
 
 		if (
