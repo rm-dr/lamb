@@ -2,7 +2,7 @@
 
 If you're reading this on PyPi, go [here](https://git.betalupi.com/Mark/lamb).
 
-![Lamb demo](https://betalupi.com/static/nc/git/lambdemo.mp4)
+![Lamb demo](https://betalupi.com/static/nc/git/lambdemo.gif)
 
 
 ## Installation
