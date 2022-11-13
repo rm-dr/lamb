@@ -10,3 +10,4 @@ dist
 
 # Misc
 *.gif
+misc/secrets.sh

@@ -1,11 +1,4 @@
-# How to use this:
-# install vhs
-# enter venv
-# vhs < misc/demo.tape
-#
-# We need macros.lamb, so run this from
-# the root of this repository.
-
+# See makedemo.sh
 
 #Output lambdemo.mp4
 Output lambdemo.gif
@@ -25,7 +18,7 @@ Enter
 Sleep 2000ms
 
 # Demo 1: load
-Type ":load macros.lamb"
+Type ":load ../macros.lamb"
 Sleep 500ms
 Enter
 Sleep 2000ms
