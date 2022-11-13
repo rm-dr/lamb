@@ -2,14 +2,15 @@
 
 If you're reading this on PyPi, go [here](https://git.betalupi.com/Mark/lamb).
 
-![Lamb demo](https://betalupi.com/static/nc/git/lambdemo.gif)
+![Lamb demo](https://betalupi.com/static/git/lambdemo.gif)
 
 
 ## Installation
 
-### Method 1: PyPi [here](https://pypi.org/project/lamb-engine)
-1. `pip install lamb-engine`
-2. `lamb`
+### Method 1: [PyPi](https://pypi.org/project/lamb-engine)
+1. *(Optional but recommended)* make and enter a [venv](https://docs.python.org/3/library/venv.html).
+2. `pip install lamb-engine`
+3. `lamb`
 
 ### Method 2: Git
 1. Clone this repository.
