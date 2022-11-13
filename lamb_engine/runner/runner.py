@@ -127,53 +127,55 @@ class Runner:
 
 
 		skip_to_end = False
-		while (
-				(
-					(self.reduction_limit is None) or
-					(k < self.reduction_limit)
-				) and not only_macro
-			):
-
-			# Show reduction count
-			if (
-					( (k >= self.iter_update) and (k % self.iter_update == 0) )
-					and not (self.step_reduction and not skip_to_end)
+		try:
+			while (
+					(
+						(self.reduction_limit is None) or
+						(k < self.reduction_limit)
+					) and not only_macro
 				):
-				print(f" Reducing... {k:,}", end = "\r")
 
-			try:
+				# Show reduction count
+				if (
+						( (k >= self.iter_update) and (k % self.iter_update == 0) )
+						and not (self.step_reduction and not skip_to_end)
+					):
+					print(f" Reducing... {k:,}", end = "\r")
+
+				# Reduce
 				red_type, node = lamb_engine.nodes.reduce(node)
-			except KeyboardInterrupt:
-				stop_reason = StopReason.INTERRUPT
-				break
 
-			# If we can't reduce this expression anymore,
-			# it's in beta-normal form.
-			if red_type == lamb_engine.nodes.ReductionType.NOTHING:
-				stop_reason = StopReason.BETA_NORMAL
-				break
+				# If we can't reduce this expression anymore,
+				# it's in beta-normal form.
+				if red_type == lamb_engine.nodes.ReductionType.NOTHING:
+					stop_reason = StopReason.BETA_NORMAL
+					break
 
-			# Count reductions
-			k += 1
-			if red_type == lamb_engine.nodes.ReductionType.FUNCTION_APPLY:
-				macro_expansions += 1
+				# Count reductions
+				k += 1
+				if red_type == lamb_engine.nodes.ReductionType.FUNCTION_APPLY:
+					macro_expansions += 1
 
-			# Pause after step if necessary
-			if self.step_reduction and not skip_to_end:
-				try:
-					s = prompt(
-						message = FormattedText([
-							("class:prompt", lamb_engine.nodes.reduction_text[red_type]),
-							("class:prompt", f":{k:03} ")
-						] + lamb_engine.utils.lex_str(str(node))),
-						style = lamb_engine.utils.style,
-						key_bindings = step_bindings
-					)
-				except KeyboardInterrupt or EOFError:
-					skip_to_end = True
-					printf(FormattedText([
-						("class:warn", "Skipping to end."),
-					]), style = lamb_engine.utils.style)
+				# Pause after step if necessary
+				if self.step_reduction and not skip_to_end:
+					try:
+						s = prompt(
+							message = FormattedText([
+								("class:prompt", lamb_engine.nodes.reduction_text[red_type]),
+								("class:prompt", f":{k:03} ")
+							] + lamb_engine.utils.lex_str(str(node))),
+							style = lamb_engine.utils.style,
+							key_bindings = step_bindings
+						)
+					except KeyboardInterrupt or EOFError:
+						skip_to_end = True
+						printf(FormattedText([
+							("class:warn", "Skipping to end."),
+						]), style = lamb_engine.utils.style)
+
+		# Gracefully catch keyboard interrupts
+		except KeyboardInterrupt:
+			stop_reason = StopReason.INTERRUPT
 
 		# Print a space between step messages
 		if self.step_reduction:
