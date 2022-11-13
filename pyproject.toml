@@ -15,7 +15,7 @@ lamb = "lamb_engine:main"
 [project]
 name = "lamb_engine"
 description = "A lambda calculus engine"
-version = "1.1.6"
+version = "1.1.7"
 dependencies = [
 	"prompt-toolkit==3.0.31",
 	"pyparsing==3.0.9"

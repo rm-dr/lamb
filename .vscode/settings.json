@@ -8,6 +8,7 @@
         "mdel",
         "onefile",
         "Packrat",
+        "printables",
         "pyparsing",
         "rlimit",
         "runstatus",
