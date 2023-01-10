@@ -1,6 +1,8 @@
 # Lamb: A Lambda Calculus Engine
 
-If you're reading this on PyPi, go [here](https://git.betalupi.com/Mark/lamb).
+ - [Primary Repo](https://git.betalupi.com/Mark/lamb)
+ - [Github Mirror](https://github.com/rm-dr/lamb)
+
 
 ![Lamb demo](https://betalupi.com/static/git/lambdemo.gif)
 
