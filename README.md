@@ -10,7 +10,11 @@
 ## Installation
 
 ### Method 1: [PyPi](https://pypi.org/project/lamb-engine)
-1. *(Optional but recommended)* make and enter a [venv](https://docs.python.org/3/library/venv.html).
+1. *(Optional but recommended)* make and enter a [venv](https://docs.python.org/3/library/venv.html)
+	- **On Windows, run the following in cmd or powershell:**
+	- `cd Desktop`
+	- `python -m venv lamb`
+	- `.\Scripts\activate`
 2. `pip install lamb-engine`
 3. `lamb`
 
