@@ -1,4 +1,4 @@
-# Lamb: A Lambda Calculus Engine
+# 🐑 Lamb: A Lambda Calculus Engine
 
  - [Primary Repo](https://git.betalupi.com/Mark/lamb)
  - [Github Mirror](https://github.com/rm-dr/lamb)
@@ -7,9 +7,19 @@
 ![Lamb demo](https://betalupi.com/static/git/lambdemo.gif)
 
 
-## Installation
+## :brain: What is lambda calculus?
 
-### Method 1: [PyPi](https://pypi.org/project/lamb-engine)
+ - [video 1](https://www.youtube.com/watch?v=3VQ382QG-y4): Introduction and boolean logic. The first few minutes are a bit confusing, but it starts to make sense at about [`6:50`](https://youtu.be/3VQ382QG-y4?t=400)
+
+ - [video 2](https://www.youtube.com/watch?v=pAnLQ9jwN-E): Continuation of video 1. Features combinators and numerals.
+
+ - [blog](https://www.driverlesscrocodile.com/technology/lambda-calculus-for-people-a-step-behind-me-1): Another introduction. Moves slower than the two videos above and doesn't assume CS knowledge. Four-part series.
+
+ - [handout](https://nc.betalupi.com/s/ormc-handouts/download?path=%2FAdvanced&files=Lambda%20Calculus.pdf): A handout I've written on lambda calculus. Solutions are available somewhere on `git.betalupi.com`. You'll have to find them yourself if you want them.
+
+## :package: Installation
+
+### Method 1 (recommended): [PyPi](https://pypi.org/project/lamb-engine)
 1. *(Optional but recommended)* make and enter a [venv](https://docs.python.org/3/library/venv.html).
 2. `pip install lamb-engine`
 3. `lamb`
@@ -23,10 +33,10 @@
 
 -------------------------------------------------
 
-## Usage
+## 📖 Usage
 
 
-Type lambda expressions into the prompt, and Lamb will evaluate them. \
+Type expressions into the prompt, and Lamb will evaluate them. \
 Use your `\` (backslash) key to type a `λ`. \
 To define macros, use `=`. For example,
 ```
@@ -65,7 +75,7 @@ Have fun!
 
 -------------------------------------------------
 
-## Commands
+## :card_file_box: Commands
 
 Lamb understands many commands. Prefix them with a `:` in the prompt.
 
@@ -104,6 +114,7 @@ The lines in a file look exactly the same as regular entries in the prompt, but 
  - Loop detection
  - α-equivalence check
  - Unchurch command: make church numerals human-readable
- - Better Syntax highlighting
- - Complete file names and commands
+ - Better syntax highlighting
+ - Tab-complete file names and commands
+ - Load default macros without manually downloading `macros.lamb` (via `requests`, maybe?)
  - Tests
