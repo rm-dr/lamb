@@ -14,7 +14,7 @@ help_texts = {}
 
 def lamb_command(
 		*,
-		command_name: str | None = None,
+		command_name = None,
 		help_text: str
 	):
 	"""

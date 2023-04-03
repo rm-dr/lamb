@@ -46,7 +46,7 @@ class Runner:
 		# Maximum amount of reductions.
 		# If None, no maximum is enforced.
 		# Must be at least 1.
-		self.reduction_limit: int | None = 1_000_000
+		self.reduction_limit = 1_000_000
 
 		# Ensure bound variables are unique.
 		# This is automatically incremented whenever we make
@@ -74,7 +74,7 @@ class Runner:
 			message = self.prompt_message
 		)
 
-	def parse(self, line) -> tuple[lamb_engine.nodes.Root | MacroDef | Command, list]:
+	def parse(self, line): # -> tuple[lamb_engine.nodes.Root | MacroDef | Command, list]
 		e = self.parser.parse_line(line)
 
 		w = []

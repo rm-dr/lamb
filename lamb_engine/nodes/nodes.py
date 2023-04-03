@@ -77,8 +77,8 @@ class Node:
 		self.parent_side: Direction = None # type: ignore
 
 		# Left and right nodes, None if empty
-		self._left: Node | None = None
-		self._right: Node | None = None
+		self._left = None
+		self._right = None
 
 		# The runner this node is attached to.
 		# Set by Node.set_runner()
@@ -341,7 +341,7 @@ class Bound(EndNode):
 		# The name of the macro this bound came from.
 		# Always equal to self.name, unless the macro
 		# this came from had a subscript.
-		self.macro_name: str | None = macro_name
+		self.macro_name = macro_name
 
 		if forced_id is None:
 			self.identifier = bound_counter
@@ -381,9 +381,9 @@ class Func(Node):
 				Func.from_parse(result)
 			)
 
-	def __init__(self, input: Macro | Bound, output: Node, *, runner = None) -> None:
+	def __init__(self, input, output: Node, *, runner = None) -> None:
 		super().__init__()
-		self.input: Macro | Bound = input
+		self.input = input
 		self.left: Node = output
 		self.right: None = None
 		self.runner = runner # type: ignore
