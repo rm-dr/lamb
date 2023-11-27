@@ -12,7 +12,7 @@
 
  - [blog](https://www.driverlesscrocodile.com/technology/lambda-calculus-for-people-a-step-behind-me-1): Another introduction. Moves slower than the two videos above and doesn't assume CS knowledge. Four-part series.
 
- - [handout](https://nc.betalupi.com/s/ormc-handouts/download?path=%2FAdvanced&files=Lambda%20Calculus.pdf): A handout I've written on lambda calculus. Solutions are available somewhere on `git.betalupi.com`. You'll have to find them yourself if you want them.
+ - [handout](https://static.betalupi.com/ormc/Advanced/Lambda%20Calculus.pdf): A handout I've written on lambda calculus.
 
 ## :package: Installation
 
