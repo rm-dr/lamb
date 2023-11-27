@@ -1,10 +1,7 @@
 # 🐑 Lamb: A Lambda Calculus Engine
 
- - [Primary Repo](https://git.betalupi.com/Mark/lamb)
- - [Github Mirror](https://github.com/rm-dr/lamb)
+![Lamb Demo](https://github.com/rm-dr/lamb/assets/96270320/d518e344-e7c8-47ed-89c4-7ce273bf4e2d)
 
-
-![Lamb demo](https://betalupi.com/static/git/lambdemo.gif)
 
 
 ## :brain: What is lambda calculus?
